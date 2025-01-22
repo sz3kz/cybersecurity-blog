@@ -38,3 +38,10 @@ Having solved the box already, I know that the ssh service will be of no interes
 
 ## FTP exploitation
 
+Instead of connecting to the ftp server and checking for downloadable files, let us first check if vsFTPd 2.3.4 is vulnerable to any exploit. 
+
+After a google search we come across the [vsftpd backdoor exploit](https://metalkey.github.io/vsftpd-v234-backdoor-command-execution.html) this version is vulnerable to. 
+
+From what I have read, the root of the vulnerability is a compromised source of distribution of vsFTPd software. Someone broke into an official server offering vsFTPd for download and - without being noticed - changed the version to contain a backdoor.
+
+The fact being that the exploit is essentially a mod to the software makes it trivial to trigger. When a server detects a connection, which used a username of format "{any-string-you-want}:)", it will open up a a listening shell on port 6200.
