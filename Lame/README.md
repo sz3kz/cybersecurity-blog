@@ -26,7 +26,7 @@ The other two - 139 and 445 - are ports characteristic of SMB over NetBIOS and S
 
 Although nmap couldn't identify what OS is running on the system, we can see that it is most probably some Linux distro.
 
-For the future I will note that the other ports are labeled by nmap to be "filtered" as in "there is something blocking connection". This will be important a bit later.
+NOTE: commonly glossed over, the fact that all other ports are labeled as "filtered" will become important later.
 
 ### Version Scanning
 
@@ -44,4 +44,20 @@ After a google search we come across the [vsftpd backdoor exploit](https://metal
 
 From what I have read, the root of the vulnerability is a compromised source of distribution of vsFTPd software. Someone broke into an official server offering vsFTPd for download and - without being noticed - changed the version to contain a backdoor.
 
-The fact being that the exploit is essentially a mod to the software makes it trivial to trigger. When a server detects a connection, which used a username of format "{any-string-you-want}:)", it will open up a a listening shell on port 6200.
+The fact being that the exploit is essentially a mod to the software makes it trivial to trigger. When a server detects a connection, which used a username of format "{any-string-you-want}:)", it will open up a listening shell on port 6200.
+
+I triggered the backdoor:
+
+![Triggering FTP backdoor]()
+
+Now all that is left is to connect to the port and viola. Just to be sure we can scan the 6200 port with nmap to check if it's open...
+
+![Checking backdoor accessibility with nmap]()
+
+Oh shit. This is not good. Just like in the quick scan, any port other than the 4 we detected earlier is "filtered", meaning something (most likely a firewall) is blocking any connection that are meant for the ports. That means that even if the backdoor has been triggered, the firewall will not allow us to connect to it in the first place!
+
+We can confirm we do not get a shell on 6200 by manually trying to connect:
+
+![Checking backdoor accessibility manually with nmap]()
+
+In contrast to the username payload we used to trigger the backdoor, this made me :( .
