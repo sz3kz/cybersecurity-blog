@@ -61,3 +61,13 @@ We can confirm we do not get a shell on 6200 by manually trying to connect:
 ![Checking backdoor accessibility manually with nmap]()
 
 In contrast to the username payload we used to trigger the backdoor, this made me :( .
+
+## SMB exploitation
+
+Refusing to give up, I switched to finding more about the Samba service. Googling the version reveals [CVE 2007 2447](https://nvd.nist.gov/vuln/detail/CVE-2007-2447), a remote code execution vulnerability found in our Samba version.
+
+While I was made aware to the fact that the [Metasploit](https://www.metasploit.com/) framework has a built in script for exploiting this CVE, I decided against using it. While I believe Metasploit makes it easier to run exploits, it does so at the cost of abstracting the living shit out of the exploitation process, and to me that essentially makes CTFs a waste of time.
+TLDR: We gonna do it with google instead.
+
+After some further searching, I have found [this site](https://amriunix.com/posts/cve-2007-2447-samba-usermap-script/) detailing the inner-workings of the vulnerability and providing a python script Proof-Of-Concept script.
+
