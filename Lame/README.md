@@ -110,9 +110,17 @@ Note: In order to get out, one can do this:
 
 ![PLACEHOLDER](images/13-ASIDE-venv-deactivation.png)
 
+### Installing the package
+
+I then installed the package:
 
 ![PLACEHOLDER](images/14-pysmb-installation.png)
+
+And confirmed that the exploit now runs.
+
 ![PLACEHOLDER](images/15-exploitscript-works.png)
+
+
 ![PLACEHOLDER](images/16-nc-listener.png)
 ![PLACEHOLDER](images/17-exploitscript-triggering-connection.png)
 ![PLACEHOLDER](images/18-nc-reverse-shell.png)
