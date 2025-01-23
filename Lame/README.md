@@ -73,6 +73,8 @@ After some further searching, I have found [this site](https://amriunix.com/post
 
 In order to use the script, I needed to download it and setup my machine to use it.
 
+### Downloading the exploit
+
 First, I copied the github link to the repo;
 
 ![Copying the repo link](images/07-git-repo-link.png)
@@ -81,11 +83,34 @@ and cloned it to my local system.
 
 ![Cloning repo to local](images/08-git-repo-cloning.png)
 
-![PLACEHOLDER](images/09-exploitscript-smb-import.png)
-![PLACEHOLDER](images/10-exploitscript-missing-module.png)
-![PLACEHOLDER](images/11-python-main-system.png)
+When I peaked inside the script to see the code, I noticed an external module import present
+
+![Showing smb module import in script](images/09-exploitscript-smb-import.png)
+
+Since this module is not a built-in python module, I would have to download it in order to run.
+Otherwise:
+
+![Executing script without module, leading to failure](images/10-exploitscript-missing-module.png)
+
+I however did not want to install the module system-wide. I believe it to be long before I have the use this exploit again, so I do not see the reason to keep the smb module on my machine after this CTF. I decided to create a python3 virtual environment.
+
+### Python virtual environment setup
+
+A python virtual environment is basically a directory, where the systems python configurations are copied. This is an environment that does not tie up to our main system. This will allow us to download the "pysmb" package we need in the environment, and when we are done with the box, we can exit out of the environment and delete it, getting rid of the smb module.
+
+Right now our python belongs to the main system.
+
+![Showing that python still belongs to the main system](images/11-python-main-system.png)
+
+With the help of [this site](https://python.land/virtual-environments/virtualenv) I set up my virtual environment.
+
 ![PLACEHOLDER](images/12-venv-setup.png)
+
+Note: In order to get out, one can do this:
+
 ![PLACEHOLDER](images/13-ASIDE-venv-deactivation.png)
+
+
 ![PLACEHOLDER](images/14-pysmb-installation.png)
 ![PLACEHOLDER](images/15-exploitscript-works.png)
 ![PLACEHOLDER](images/16-nc-listener.png)
