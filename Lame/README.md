@@ -145,4 +145,10 @@ And bam! I got a reverse-shell!
 
 Thats it!
 
+## Post-exploitation - FTP vulnerability check
+
+Out of curiosity, we can check whether the vsFTPd exploit is truly running or not, since now we are on the host, so firewall will block our scan.
+
 ![PLACEHOLDER](images/20-postexploitation-ftp-backdoor.png)
+
+The exploit worked, but was safely isolated by the firewall.
