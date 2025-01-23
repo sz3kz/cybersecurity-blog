@@ -70,8 +70,17 @@ While I was made aware to the fact that the [Metasploit](https://www.metasploit.
 TLDR: We gonna do it with google instead.
 
 After some further searching, I have found [this site](https://amriunix.com/posts/cve-2007-2447-samba-usermap-script/) detailing the inner-workings of the vulnerability and providing a python script Proof-Of-Concept script.
-![PLACEHOLDER](images/07-git-repo-link.png)
-![PLACEHOLDER](images/08-git-repo-cloning.png)
+
+In order to use the script, I needed to download it and setup my machine to use it.
+
+First, I copied the github link to the repo;
+
+![Copying the repo link](images/07-git-repo-link.png)
+
+and cloned it to my local system.
+
+![Cloning repo to local](images/08-git-repo-cloning.png)
+
 ![PLACEHOLDER](images/09-exploitscript-smb-import.png)
 ![PLACEHOLDER](images/10-exploitscript-missing-module.png)
 ![PLACEHOLDER](images/11-python-main-system.png)
