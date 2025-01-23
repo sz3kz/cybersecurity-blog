@@ -120,9 +120,29 @@ And confirmed that the exploit now runs.
 
 ![PLACEHOLDER](images/15-exploitscript-works.png)
 
+### Running the exploit
+
+This exploit forces the target to create a reverse-shell with our machine. In order for the server to have something to connect to, we use netcat to set up a listener.
 
 ![PLACEHOLDER](images/16-nc-listener.png)
-![PLACEHOLDER](images/17-exploitscript-triggering-connection.png)
-![PLACEHOLDER](images/18-nc-reverse-shell.png)
+
+From running the exploit without arguments earlier we see the argument format we should use:
+* <RHOST> - server IP ("R"emote)
+* <RPORT> - server port
+* <LHOST> - our machine IP ("L"istner)
+* <LPORT> - port nc is listening on
+
+Note: the <RPORT> argument should be either 139 or 445. I have tried to run it on any other port and the connection is not made. I believe it to be another sign that a firewall is specifically disallowing the server to communicate over ports other than we found in the scan.
+
 ![PLACEHOLDER](images/19-ASIDE-exploitscript-firewall-blocked.png)
+
+I triggered the exploit:
+
+![PLACEHOLDER](images/17-exploitscript-triggering-connection.png)
+
+And bam! I got a reverse-shell!
+![PLACEHOLDER](images/18-nc-reverse-shell.png)
+
+Thats it!
+
 ![PLACEHOLDER](images/20-postexploitation-ftp-backdoor.png)
