@@ -78,7 +78,10 @@ No anon access confirmed.
 
 ### SSH
 I really had nothing to work with except maybe some brute-force attacks, so I decided to leave it.
+
 ## Website enumeration
+Let's check the http service now!
+
 ### Home page
 After navigating to the home page, I was greeted with:
 
