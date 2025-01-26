@@ -90,3 +90,10 @@ After navigating to the home page, I was greeted with:
 From the Dashboard alone I derived that the site has to do with network traffic analysis.
 
 It is also important to note that we are already logged in as **Nathan**.
+
+### Account options
+Clicking at the _Nathan_ box revealed some basic account options:
+
+![Image of "Nathan" account options: "Message", "Settings", "Log Out"](images/website_account-options.png)
+
+These were - however - unclickable, probably due to not being implemented.
