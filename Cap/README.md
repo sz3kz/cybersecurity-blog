@@ -57,7 +57,7 @@ From the scan I discovered versions of the services:
 * While `OpenSSH 8.2p1` has a list of [vulnerabilities](https://nvd.nist.gov/vuln/search/results?cves=on&cpe_version=cpe:/a:openbsd:openssh:8.2p1), they typically already require access to the system or rely on an administrator connection to be occuring at the time of exploit. Keeping these in mind, I moved on.
 * Did not find anything interesting about the `Gunicorn` http server.
 
-## Enumerating services
+## Enumerating FTP & SSH
 
 ### FTP
 Normally, when anonymous access is allowed on a FTP server, nmap will detect that. In order to confirm disallowed anonymous access, I tried to manually connect to vsFTPd:
