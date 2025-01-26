@@ -78,3 +78,12 @@ No anon access confirmed.
 
 ### SSH
 I really had nothing to work with except maybe some brute-force attacks, so I decided to leave it.
+## Website enumeration
+### Home page
+After navigating to the home page, I was greeted with:
+
+![Image of home section of site](images/website_main-page.png)
+
+From the Dashboard alone I derived that the site has to do with network traffic analysis.
+
+It is also important to note that we are already logged in as **Nathan**.
