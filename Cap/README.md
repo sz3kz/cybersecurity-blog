@@ -26,7 +26,7 @@ Nmap done: 1 IP address (1 host up) scanned in 3.70 seconds
 
 As shown, the server is hosting ftp, ssh and an http service.
 
-What I also deduced, is that the server is most probably not behind a firewall, in contrast to [Lame](https://github.com/sz3kz/cybersecurity-blog/tree/main/Lame).
+ASIDE: What I also deduced, is that the server is most probably not behind a firewall, in contrast to [Lame](https://github.com/sz3kz/cybersecurity-blog/tree/main/Lame).
 
 ### Scanning - version
 
@@ -56,3 +56,25 @@ From the scan I discovered versions of the services:
 * `vsFTPd 3.0.3` is vulnerable to **CVE-2021-30047** - a remote DOS attack. This does not help in owning the system.
 * While `OpenSSH 8.2p1` has a list of [vulnerabilities](https://nvd.nist.gov/vuln/search/results?cves=on&cpe_version=cpe:/a:openbsd:openssh:8.2p1), they typically already require access to the system or rely on an administrator connection to be occuring at the time of exploit. Keeping these in mind, I moved on.
 * Did not find anything interesting about the `Gunicorn` http server.
+
+## Enumerating services
+
+### FTP
+Normally, when anonymous access is allowed on a FTP server, nmap will detect that. In order to confirm disallowed anonymous access, I tried to manually connect to vsFTPd:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Cap]$ ftp anonymous@$IP
+Connected to 10.10.10.245.
+220 (vsFTPd 3.0.3)
+331 Please specify the password.
+Password:
+530 Login incorrect.
+ftp: Login failed
+ftp> exit
+221 Goodbye.
+```
+
+No anon access confirmed.
+
+### SSH
+I really had nothing to work with except maybe some brute-force attacks, so I decided to leave it.
