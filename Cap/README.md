@@ -97,3 +97,11 @@ Clicking at the _Nathan_ box revealed some basic account options:
 ![Image of "Nathan" account options: "Message", "Settings", "Log Out"](images/website_account-options.png)
 
 These were - however - unclickable, probably due to not being implemented.
+
+### Netstat & IP
+I did not find anything of interest on these pages:
+
+![Image of "Netstat" - network connection status page](images/website_netstat.png)
+
+![Image of "IP" - ip address and interface information page](images/website_ip.png)
+
