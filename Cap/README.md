@@ -79,7 +79,7 @@ No anon access confirmed.
 ### SSH
 I really had nothing to work with except maybe some brute-force attacks, so I decided to leave it.
 
-## Website enumeration
+## Enumerating HTTP
 Let's check the http service now!
 
 ### Home page
@@ -115,4 +115,21 @@ It appears that this webpage allows users to download a capture of their network
 ```bash
 (sz3kz@kali)~{tun0:10.10.14.19}~[Cap]$ ls ~/DownloadOrCapture/
 1.pcap
+```
+
+## Exploiting the URL
+What caught my attention is the path in the page's URL:
+
+```bash
+http://10.10.10.245/data/1
+```
+
+What is that `1` at the end? None of the other pages had such a weird path. I wouldn't think anything of it if the other pages had something like `/data/2` and `/data/3`, but they don't. Apart from that, the page does not have any link that would maybe point to `/data/2` - indicating the `1` as the first part of many data pages I could access. 
+
+I have then realized that the website might server contents of `/data/` to every user, entrusting the navigation controls to point the client to the file that meant for them. This could indicate an [Insecure Direct Object Reference](https://portswigger.net/web-security/access-control/idor) vulnerability, where by changing the URL I can view resources I was not supposed to.
+
+I tried my hypothesis:
+
+```bash
+http://10.10.10.245/data/1 -> http://10.10.10.245/data/0
 ```
