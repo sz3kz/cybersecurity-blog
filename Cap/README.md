@@ -137,3 +137,66 @@ http://10.10.10.245/data/1 -> http://10.10.10.245/data/0
 ![Image of another user's security page](images/website_discovering-IDOR.png)
 
 This allowed me to download network traffic of another user!
+
+## Analysing the PCAP captured traffic in Wireshark
+First things first after opening Wireshark, I wanted to have an overview of what traffic was captured:
+
+`Statistics` -> `Protocol Hierarchy`
+
+![Image of the protocol hierarchy of traffic saved in the file](images/wireshark_protocol-hierarchy.png)
+
+The pcap has http and ftp traffic.
+
+### Analysing HTTP
+I believed that HTTP data would disclose much more info than ftp, so I checked it first.
+
+![Image of all http packets](images/wireshark_http-packets.png)
+
+I wanted to get a neatly concatenated view of the conversation:
+`Right-Click the packets` -> `Follow` -> `HTTP Stream`
+
+```bash
+GET / HTTP/1.1
+Host: 192.168.196.16
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Accept-Language: en-GB,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+DNT: 1
+Sec-GPC: 1
+Pragma: no-cache
+Cache-Control: no-cache
+
+HTTP/1.0 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 1240
+Server: Werkzeug/2.0.0 Python/3.8.5
+Date: Fri, 14 May 2021 13:12:49 GMT
+
+<!doctype html>
+<html lang="en">
+        <head>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+                <link href="https://bootswatch.com/5/darkly/bootstrap.css" rel="stylesheet">
+                <link href="/static/main.css" rel="stylesheet">
+        </head>
+
+        <body class="text-center">
+                <h1 class="h3 mb-3 font-weight-normal">Please Enter PCAP to be analyzed</h1>
+                <form action="/upload" method="POST" enctype="multipart/form-data">
+
+                        <label for="formFile" class="form-label">PCAP To Be Analzyed</label>
+                        <input name="file" class="btn custom-form-cap form-control" type="file" id="formFile">
+                        <input name="submit" type="submit" value="Submit">
+                        <!--<button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>-->
+                </form>
+
+        </body>
+        <footer>
+                <p style="bottom: 0%; position: fixed; width: 100%;" class="mt-5 mb-3 text-muted">&copy; 2021</p>
+        </footer>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+```
+Disappointingly, the traffic only had a random `GET` request to a page, with no important information.
