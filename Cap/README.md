@@ -133,3 +133,7 @@ I tried my hypothesis:
 ```bash
 http://10.10.10.245/data/1 -> http://10.10.10.245/data/0
 ```
+
+![Image of another user's security page](images/website_discovering-IDOR.png)
+
+This allowed me to download network traffic of another user!
