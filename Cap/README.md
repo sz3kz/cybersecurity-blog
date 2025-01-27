@@ -200,3 +200,40 @@ Date: Fri, 14 May 2021 13:12:49 GMT
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
 ```
 Disappointingly, the traffic only had a random `GET` request to a page, with no important information.
+
+### Analysing FTP
+
+```bash
+220 (vsFTPd 3.0.3)
+USER nathan
+331 Please specify the password.
+PASS Buck3tH4TF0RM3!
+230 Login successful.
+SYST
+215 UNIX Type: L8
+PORT 192,168,196,1,212,140
+200 PORT command successful. Consider using PASV.
+LIST
+150 Here comes the directory listing.
+226 Directory send OK.
+PORT 192,168,196,1,212,141
+200 PORT command successful. Consider using PASV.
+LIST -al
+150 Here comes the directory listing.
+226 Directory send OK.
+TYPE I
+200 Switching to Binary mode.
+PORT 192,168,196,1,212,143
+200 PORT command successful. Consider using PASV.
+RETR notes.txt
+550 Failed to open file.
+QUIT
+221 Goodbye.
+```
+
+The traffic capture caught a clear-text ftp credential transfer (and a failed file retrieval attempt)!
+
+Credentials: 
+
+`nathan`:`Buck3tH4TF0RM3!`
+
