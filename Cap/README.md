@@ -278,3 +278,85 @@ nathan@cap:~$
 ```
 
 I am on the machine now!
+
+## Enumerating the  user
+In order to root the machine I needed to find something that would elevate my privileges.
+
+Having very limited experience with [linux Privilege Escalation Awesome Scripts SUITE](https://github.com/peass-ng/PEASS-ng/tree/master/linPEAS/builder/src), I decided to manually search the system (which was a terrible and painful mistake).
+
+I checked what id / group the user belonged to:
+
+```bash
+nathan@cap:~$ id
+uid=1001(nathan) gid=1001(nathan) groups=1001(nathan)
+```
+
+Since nathan was only in his user's group, he was definetly not able to `sudo`:
+
+```bash
+nathan@cap:~$ sudo --list
+[sudo] password for nathan:
+Sorry, user nathan may not run sudo on cap.
+```
+
+Files owned by nathan or accessible to the nathan group also did not yield anything interesting:
+
+```bash
+nathan@cap:~$ find / -user nathan 2>/dev/null
+...
+/home/nathan
+/home/nathan/.profile
+/home/nathan/.bash_logout
+/home/nathan/.cache
+/home/nathan/.cache/motd.legal-displayed
+/home/nathan/user.txt
+/home/nathan/.bashrc
+/var/www/html
+/var/www/html/app.py
+/var/www/html/__pycache__
+/var/www/html/__pycache__/app.cpython-38.pyc
+...
+```
+
+```bash
+nathan@cap:~$ find / -group nathan 2>/dev/null
+...
+/home/nathan
+/home/nathan/.profile
+/home/nathan/.bash_logout
+/home/nathan/.cache
+/home/nathan/.cache/motd.legal-displayed
+/home/nathan/user.txt
+/home/nathan/.bashrc
+/var/www/html
+/var/www/html/app.py
+/var/www/html/__pycache__
+/var/www/html/__pycache__/app.cpython-38.pyc
+...
+```
+
+I also tried to do something with the SUID binaries on the system:
+
+```bash
+nathan@cap:~$ find / -perm /4000 2>/dev/null
+/usr/bin/umount
+/usr/bin/newgrp
+/usr/bin/pkexec
+/usr/bin/mount
+/usr/bin/gpasswd
+/usr/bin/passwd
+/usr/bin/chfn
+/usr/bin/sudo
+/usr/bin/at
+/usr/bin/chsh
+/usr/bin/su
+/usr/bin/fusermount
+/usr/lib/policykit-1/polkit-agent-helper-1
+/usr/lib/snapd/snap-confine
+/usr/lib/openssh/ssh-keysign
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/lib/eject/dmcrypt-get-device
+...
+```
+
+However - even with the help of [GTFOBins](https://gtfobins.github.io/#+suid) - I had no luck in doing anything.
