@@ -105,3 +105,14 @@ I did not find anything of interest on these pages:
 
 ![Image of "IP" - ip address and interface information page](images/website_ip.png)
 
+### Security dashboard
+I then took a look at the security dashboard:
+
+![Image of "Security Dashboard"](images/website_security-dashboard.png)
+
+It appears that this webpage allows users to download a capture of their network traffic. I confirmed my suspicion by clicking on the Download box, which triggered a download to my system:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Cap]$ ls ~/DownloadOrCapture/
+1.pcap
+```
