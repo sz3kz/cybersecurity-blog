@@ -98,3 +98,15 @@ Host script results:
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 74.79 seconds
 ```
+
+[msrpc](https://superuser.com/questions/616098/what-is-rpc-and-why-is-it-so-important) - Microsoft Windows RPC, this service is largely not so important to me as it is not really used to host anything. To my mind, MS Windows RPC is a service that allows applications on the Windows machine to communicate with eachother. While RPC can also be used to send commands to the machine, which would warrant a code execution check, I had my money on the other services present.
+
+[netbios-ssn](https://medium.com/@chavanyashwardhan/difference-between-netbios-smb-1cd74ec02fdd) - From my understanding, it is a windows service that allows another machine to connect to the one running it. It gives every computer a NetBIOS name similar to their hostname(here HARIS-PC\x00). With NetBIOS, a computer can refer to a target computer via its NetBIOS name, which by resultion is translated into an IP address. This can also host an SMB service as _SMB over NetBIOS_.
+
+[microsoft-ds](https://en.wikipedia.org/wiki/Server_Message_Block) - this is an SMB service that allows sharing files on the network. Seeing this service on 445 means SMB can be run _over TCP/IP_ directly also.
+
+From the scans I gathered the following:
+* there is no firewall present (quick scann detected closed ports)
+* OS: Windows 7 SP 1
+* hostname:"haris-PC"
+* SMB file sharing is enabled on the system
