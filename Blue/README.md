@@ -22,3 +22,33 @@ PING 10.10.10.40 (10.10.10.40) 56(84) bytes of data.
 5 packets transmitted, 5 received, 0% packet loss, time 4002ms
 rtt min/avg/max/mdev = 112.942/157.924/191.158/33.790 ms
 ```
+
+### Scanning
+
+First I fished for open ports:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ sudo nmap -sS -T5 -O -oN scan-quick.txt $IP
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-31 05:50 EST
+Nmap scan report for 10.10.10.40
+Host is up (0.11s latency).
+Not shown: 991 closed tcp ports (reset)
+PORT      STATE SERVICE
+135/tcp   open  msrpc
+139/tcp   open  netbios-ssn
+445/tcp   open  microsoft-ds
+49152/tcp open  unknown
+49153/tcp open  unknown
+49154/tcp open  unknown
+49155/tcp open  unknown
+49156/tcp open  unknown
+49157/tcp open  unknown
+Device type: general purpose
+Running: Microsoft Windows 2008|7|Vista|8.1
+OS CPE: cpe:/o:microsoft:windows_server_2008:r2 cpe:/o:microsoft:windows_7 cpe:/o:microsoft:windows_vista cpe:/o:microsoft:windows_8.1
+OS details: Microsoft Windows Vista SP2 or Windows 7 or Windows Server 2008 R2 or Windows 8.1
+Network Distance: 2 hops
+
+OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 13.00 seconds
+```
