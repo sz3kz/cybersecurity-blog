@@ -110,3 +110,61 @@ From the scans I gathered the following:
 * OS: Windows 7 SP 1
 * hostname:"haris-PC"
 * SMB file sharing is enabled on the system
+
+## Enumerating SMB
+I predicted the SMB server would be the most important thing to test, so I tested it first.
+
+I scanned the _SMB over TCP/IP_ for the version of SMB on the machine:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ nmap -p 445 --script smb-protocols $IP
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-31 06:13 EST
+Nmap scan report for 10.10.10.40
+Host is up (0.19s latency).
+
+PORT    STATE SERVICE
+445/tcp open  microsoft-ds
+
+Host script results:
+| smb-protocols:
+|   dialects:
+|     NT LM 0.12 (SMBv1) [dangerous, but default]
+|     2:0:2
+|_    2:1:0
+
+Nmap done: 1 IP address (1 host up) scanned in 4.82 seconds
+```
+
+Seeing SMBv1, I immediately remebered the [EternalBlue](https://en.wikipedia.org/wiki/EternalBlue) exploit this version might be suseptible to.
+This would also line up with the OS version, as [the Microsoft Bulletin covering EternalBlue](https://learn.microsoft.com/en-us/security-updates/SecurityBulletins/2017/ms17-010) deems similar if not identical versions of windows to be vulnerable.
+I ran another nmap scan, this time check if this vulnerability is exploitable here:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ nmap -p 445 --script smb-vuln-ms17-010 $IP
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-31 06:16 EST
+Nmap scan report for 10.10.10.40
+Host is up (0.23s latency).
+
+PORT    STATE SERVICE
+445/tcp open  microsoft-ds
+
+Host script results:
+| smb-vuln-ms17-010:
+|   VULNERABLE:
+|   Remote Code Execution vulnerability in Microsoft SMBv1 servers (ms17-010)
+|     State: VULNERABLE
+|     IDs:  CVE:CVE-2017-0143
+|     Risk factor: HIGH
+|       A critical remote code execution vulnerability exists in Microsoft SMBv1
+|        servers (ms17-010).
+|
+|     Disclosure date: 2017-03-14
+|     References:
+|       https://blogs.technet.microsoft.com/msrc/2017/05/12/customer-guidance-for-wannacrypt-attacks/
+|       https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-0143
+|_      https://technet.microsoft.com/en-us/library/security/ms17-010.aspx
+
+Nmap done: 1 IP address (1 host up) scanned in 2.99 seconds
+```
+
+The machine is vulnerable!
