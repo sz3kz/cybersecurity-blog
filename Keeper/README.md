@@ -104,3 +104,16 @@ I `sudo vim` added the following entry to my `/etc/hosts` file:
 When I tried visiting the link again, I could finally access the resource:
 
 ![Firefox finally shows the site that the link pointed to](images/tickets-login-page.png)
+
+### Taking advantage of default credentials
+The login page reveals `tickets.keeper.htb` to be a Request Tracker service. Studying its version (`4.4.4`) I was not able to find any exploits.
+
+However, [Request Tracker does have known default conditionals](https://rt-wiki.bestpractical.com/wiki/ManualBasicAdministration):
+
+```bash
+root:password
+```
+
+I tried this set of credentials and successfully logged in!
+
+![Main Request Tracker page after successfull login](images/logged-in.png)
