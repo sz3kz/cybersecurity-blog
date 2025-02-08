@@ -72,3 +72,35 @@ Summary of the scans:
 * 80 -> http
   * nginx/1.18
   * vulnerable to crashes -> not helpful for rooting
+
+## Enumerating the website
+Since I didn't have a lot of information about the system and SSH does not have any default credentials (ssh passwords are machine passwords), I really didn't have any leads on doing anything with SSH at the start. I decided to look into the website first in order to gather more info.
+
+### Connecting
+This is what I saw when navigating to the IP address over http:
+
+![Site showing a link to another page](images/visiting-main-site.png)
+
+After clicking the link my DNS lookup failed, leading to this:
+
+![Firefox can't find site from link](images/trouble-finding-site.png)
+
+Here I suspected that the site does something called virtual hosting.
+
+Virtual hosting is the act of running multiple servers on the same machine(the same IP address) and deciding on which one to send to the client based on the "Host" header of the request.
+
+Normally, this wouldn't be a problem if my machine was connected to a DNS server that would pre-map the machine ip address to the multiple http servers it hosts. I however do not have such a DNS to connect to. That means that my DNS is trying to get information on a public DNS, that does not have the entry of this hackthebox site, leading to nothing being found.
+
+This means that I have to manually map my DNS configurations on my machine to tell my DNS to go straight to the ip address of the box.
+
+Looking at the URL of the site the link points to, I see that I want to access `tickets.keeper.htb`
+
+I `sudo vim` added the following entry to my `/etc/hosts` file:
+
+```bash
+10.10.11.227    tickets.keeper.htb
+```
+
+When I tried visiting the link again, I could finally access the resource:
+
+![Firefox finally shows the site that the link pointed to](images/tickets-login-page.png)
