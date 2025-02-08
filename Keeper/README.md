@@ -176,3 +176,25 @@ and `curl`ed the file into my box:
                                  Dload  Upload   Total   Spent    Left  Speed
 100 83.3M  100 83.3M    0     0   292k      0  0:04:52  0:04:52 --:--:--  269k
 ```
+
+## .zip file analysis
+
+### Checking the files
+I first inflated the .zip file to see what files were present:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ unzip files.zip
+Archive:  files.zip
+  inflating: KeePassDumpFull.dmp
+ extracting: passcodes.kdbx
+```
+
+I checked what my machine thought these files were:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ file KeePassDumpFull.dmp passcodes.kdbx
+KeePassDumpFull.dmp: Mini DuMP crash report, 16 streams, Fri May 19 13:46:21 2023, 0x1806 type
+passcodes.kdbx:      Keepass password database 2.x KDBX
+```
+
+Checking out Keepass version 2.x reveals a potential exploit of [CVE-2023-32784](https://nvd.nist.gov/vuln/detail/CVE-2023-32784). This exploit allows the extraction of the master password of the current Keypass database by memory analysis. The dump in the .zip must surely be of the Keypass app!
