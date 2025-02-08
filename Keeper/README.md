@@ -198,3 +198,19 @@ passcodes.kdbx:      Keepass password database 2.x KDBX
 ```
 
 Checking out Keepass version 2.x reveals a potential exploit of [CVE-2023-32784](https://nvd.nist.gov/vuln/detail/CVE-2023-32784). This exploit allows the extraction of the master password of the current Keypass database by memory analysis. The dump in the .zip must surely be of the Keypass app!
+
+### ASIDE: confirming the dump
+
+Since a memory dump was given with a Keepass database of a potentially vulnerable version, looking at this as a CTF scenario there is no doubt the dump is of the Keypass process.
+
+This logic seemed to me a bit artificial, since the CTF is trying th emulate a real scenario. Therefore I returned to the site in order to check if there is any info about the dump.
+
+After searching, I discovered a ticket posted by `lnorgaard` by navigating:
+
+`Search` -> `Tickets` -> `Recently Viewed` -> `#300000: Issue with Keepass Client on Windows`
+
+After switching to the `History` tab:
+
+![Screenshot of the ticket details lnorgaard posted](images/ticket-details.png)
+
+With this I can know for sure that the dump is of the Keepass process. I also saw that this information also holds the hint to where the .zip file was stored.
