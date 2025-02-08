@@ -117,3 +117,31 @@ root:password
 I tried this set of credentials and successfully logged in!
 
 ![Main Request Tracker page after successfull login](images/logged-in.png)
+
+### User discovery
+After poking around, I found a user account that is administrated by the service in `Admin` -> `Users`:
+
+![Screenshot of found user "lnorgaard"](images/lnorgaard-user.png)
+
+This pointed me the following credentials:
+
+```bash
+lnorgaard:Welcome2023!
+```
+
+I tried these credentials through ssh and successfully connected to the machine:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ ssh lnorgaard@10.10.11.227
+lnorgaard@10.10.11.227's password:
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 5.15.0-78-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+You have mail.
+Last login: Sat Feb  8 14:11:10 2025 from 10.10.14.19
+lnorgaard@keeper:~$
+```
