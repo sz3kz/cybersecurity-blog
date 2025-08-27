@@ -190,6 +190,8 @@ Users           Disk
 We can now try to connect to these shares and enumerate the data they hold. I will refrain from that for now.
 
 #### Disclosed System Information
+Having a look into the description of the [nmap smb-os-discovery script](https://nmap.org/nsedoc/scripts/smb-os-discovery.html), we see that it basically just catches 
+info that is given to us by the server itself when we create a session. This would mean that it should be easily viewable for us:
 
 ```bash
 TargetInfo               : *
@@ -442,3 +444,4 @@ C:\Windows\system32>whoami
 whoami
 nt authority\system
 ```
+
