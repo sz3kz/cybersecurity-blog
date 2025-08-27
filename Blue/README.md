@@ -21,6 +21,7 @@ Table o' contents:
 [pyenv Setup](#pyenv-setup)
 
 [Running The Exploits](#running-the-exploits)
+
 [Verbose Automation](#verbose-automation)
 
 
@@ -660,6 +661,7 @@ nt authority\system
 C:\Windows\system32>
 
 ```
+
 
 
 
