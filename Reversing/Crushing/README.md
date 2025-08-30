@@ -549,3 +549,6 @@ What we must do in order to solve this is we need to iteratively read the messag
 these occurences. The file starts out with zeros (non-printable characters were not used in the message), until we encounter a 0xD (13 decimal), followed by 13 positions of the specific character.
 This character is 0xa or "\n" - meaning there are 13/14 lines in the message. 
 NOTE: In our keeping track of the charcode in question, we need to keep in mind we must not increment the charcode counter while reading the number of occurences of previous charcodes!
+
+I have created a C and a Python version of the solution, with the name of the file hardcoded inside them.
+The C solution was a bit more complicated to implement, as C does not give you a Linked List datatype, unlike Python, so I implemented it myself.
