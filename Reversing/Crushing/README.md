@@ -437,3 +437,115 @@ long list_len( long offset_pointer){
 	return ???;
 }
 ```
+### Full C code
+```bash
+int main(void){
+	long characters_registered; 	//[rbp-0x8]
+	long character_map[256] = {0}	//[rbp-0x810]
+	int character;					//[rbp-0xc]
+	
+	characters_registered = 0;
+	
+	while (1){
+		character = getchar();
+		if ( character == EOF){
+			break;
+		}
+		add_char_to_map(character_map, (long) character, characters_registered);
+		++characters_registered;
+	}
+		
+	serialize_and_output(character_map);
+	
+	return 0;
+}
+
+long list_len( long offset_pointer){
+	long offset_pointer;					//[rbp-0x18]
+	long offset_pointer_value;				//[rbp-0x10]
+	???										//[rbp-0x8]
+	
+	
+	if (*offset_pointer == 0){
+		return 0;
+	}
+	
+	??? = 1;
+	offset_pointer_value = *offset_pointer;
+	
+	while ( *(offset_pointer_value + 0x8) != 0){
+		offset_pointer_value = *(offset_pointer_value + 0x8);
+		???++;
+	}
+	
+	return ???;
+}
+
+void serialize_and_output(character_map){
+	/* loops through every character space
+	Get amount of positions for that character code
+	writes it out.
+	Iterates through every 
+	*/
+	long * character_map;			//[rbp-0x28]
+	int index?;						//[rbp-0x4]
+	long offset_pointer;			//[rbp-0x18]
+	long list_len_return;			//[rbp-0x20]
+	long offset_pointer_value;		//[rbp-0x10]
+	
+	
+	
+	while (index <= 0xfe){
+		offset_pointer = character_map + index * 8;
+		list_len_return = list_len(offset_pointer);
+		fwrite( &list_len_return, 0x8, 0x1, stdout);
+		
+		while(*(offset_pointer + 0x8) != 0){
+			fwrite(offset_pointer,0x8,0x1,stdout);
+			offset_pointer = *(offset_pointer + 0x8)
+			++index
+		}
+		
+	}
+}
+
+void add_char_to_map(long * character_map, long character, long characters_registered){
+	/* Creates a map of 256 8-byte memory spaces
+	each memory space corresponds to a character code (ascii)
+	When a character is registered, its corresponding memory space
+		will be populated with a pointer to a Linked List 16 byte construct:
+		* first 8 bytes -> index place in inputted string (characters_registered)
+		* last 8 bytes -> null ( to be populated with another pointer)
+	*/	
+	long * character_map;			//[rbp-0x18]
+	long character;					//[rbp-0x1c]
+	long characters_registered;		//[rbp-0x28]
+	long * malloc_ptr;				//[rbp-0x10]
+	long ??? ;						//[rbp-0x8]
+	
+	long ??? = * (character_map + character * 8)
+	
+	malloc_ptr = (long *) malloc( 16 );
+	
+	*(malloc_ptr) = characters_registered;
+	*(malloc_ptr + 8) = 0;
+	
+	if (??? == 0){
+		*(character_map + character * 8) = malloc_ptr;
+		return 0;
+	}
+	
+	while ( *(???+0x8) != 0){
+		??? = *(???+0x8);
+	}
+	*(???+0x8) = malloc_ptr;
+	
+	return 0	
+}
+```
+
+## Solution
+What we must do in order to solve this is we need to iteratively read the message file, where the first thing we will encounter is the number of occurences of a character, followed by index positions of
+these occurences. The file starts out with zeros (non-printable characters were not used in the message), until we encounter a 0xD (13 decimal), followed by 13 positions of the specific character.
+This character is 0xa or "\n" - meaning there are 13/14 lines in the message. 
+NOTE: In our keeping track of the charcode in question, we need to keep in mind we must not increment the charcode counter while reading the number of occurences of previous charcodes!
